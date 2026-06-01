@@ -40,5 +40,18 @@ npm run dev
 4. User enter OTP (step 2)
 5. Validate OTP
 6. User enter password and confirm password (step 3)
-7. POST /auth/forget-password (?)
-8. Navigate("/login")
+7. Navigate to ("/login")
+
+# REGISTER
+* same as forget password
+
+# DASHBOARD
+1. Welcome sign
+2. Broadcast list
+3. Add broadcast (kaprodi + dekan)
+
+# NOTIFICATION
+1. Notification icon with amount of unread notification
+2. Read notification (blue circle)
+3. Unread notification (muted blue circle)
+4. On click -> direct to page
