@@ -1,0 +1,66 @@
+import { User, Role} from "../types/auth";
+
+export type MockUser = User & { password: string; access_token: string };
+
+export const mockUsers: MockUser[] = [
+  {
+    id: "1",
+    email: "dekan@uph.edu",
+    nama: "Dr. Budi Santoso",
+    jabatan: "dekan",
+    jurusan: "All",
+    foto: null,
+    password: "password123",
+    access_token: "mock-token-1",
+  },
+  {
+    id: "2",
+    email: "kaprodi@lecturer.uph.edu",
+    nama: "Ferawaty S.Kom,. M.Kom.",
+    jabatan: "kaprodi",
+    jurusan: "Informatika",
+    foto: null,
+    password: "password123",
+    access_token: "mock-token-2",
+  },
+  {
+    id: "3",
+    email: "lppm@uph.edu",
+    nama: "Dr. Ahmad",
+    jabatan: "lppm",
+    jurusan: "All",
+    foto: null,
+    password: "password123",
+    access_token: "mock-token-3",
+  },
+  {
+    id: "4",
+    email: "tu@uph.edu",
+    nama: "Rina Wulandari",
+    jabatan: "tata-usaha",
+    jurusan: "Informatika",
+    foto: null,
+    password: "password123",
+    access_token: "mock-token-4",
+  },
+  {
+    id: "5",
+    email: "dosen@lecturer.uph.edu",
+    nama: "Mangasa",
+    jabatan: "dosen",
+    jurusan: "Informatika",
+    foto: null,
+    password: "password123",
+    access_token: "mock-token-5",
+  },
+  {
+    id: "7",
+    email: "admin@uph.edu",
+    nama: "Admin Sistem",
+    jabatan: "admin",
+    jurusan: "All",
+    foto: null,
+    password: "password123",
+    access_token: "mock-token-7",
+  },
+];
