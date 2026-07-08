@@ -38,7 +38,7 @@ export default function StepEmail({ onBack, onNext, mode = "forgot" }: StepEmail
 
     const onSubmit: SubmitHandler<StepEmailForm> = async (data) => {
         try {
-            await sendOtpAPI(data.email);
+            await sendOtpAPI(data.email, mode);
             await onNext(data.email);
         } catch (err) {
             const message = err instanceof Error ? err.message : "Terjadi kesalahan, coba lagi.";
@@ -49,9 +49,9 @@ export default function StepEmail({ onBack, onNext, mode = "forgot" }: StepEmail
     return (
         <AuthLayout>
             <div className="flex justify-center mb-5">
-                <img src="/uph-logo.png" alt="Logo UPH" className="w-[300px]" />
+                <img src="/uph-logo.png" alt="Logo UPH" className="w-[150px] lg:w-[300px]" />
             </div>
-            <h1 className="font-semibold uppercase mb-4 text-2xl">{title}</h1>
+            <h1 className="font-semibold uppercase mb-4 text-lg lg:text-2xl">{title}</h1>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                 <FormField label="Email" id="email" type="email" placeholder="Masukkan email" error={errors.email?.message} {...register("email")} />
                 <div className="flex items-center justify-center flex-col gap-3">

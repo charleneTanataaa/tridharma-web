@@ -22,4 +22,5 @@ export const ADMIN_ITEMS: AdminItem[] = [
   { field: "soal_uas", label: "Soal UAS", description: "Berkas soal ujian akhir semester", },
   { field: "berita_acara", label: "Berita Acara Perkuliahan", description: "Laporan pelaksanaan perkuliahan", },
   { field: "nilai", label: "Nilai Akhir", description: "Nilai mahasiswa", },
+  { field: "nilai", label: "Nilai Akhir", description: "Nilai mahasiswa", },
 ];

@@ -1,57 +1,81 @@
 import { useNavigate, useParams } from "react-router-dom";
+import { useState } from "react";
 import DashboardLayout from "../../layouts/DashboardLayout";
-import { mockMataKuliahDetail, MataKuliahDetail } from "../../mock/data";
-import { MdKeyboardArrowRight } from "react-icons/md";
+import { mockMataKuliahDetail, MataKuliahDetail as MataKuliahDetailType } from "../../mock/data";
 import MataKuliahHeader from "../../components/ui/MataKuliahHeader";
 import { ADMIN_ITEMS } from "../../types/mataKuliah";
 import AdminCard from "../../components/ui/AdminCard";
 import { useAuthStore } from "../../stores/auth.store";
+import Breadcrumb from "../../components/ui/Breadcrumb";
+import { uploadHasilMataKuliahAPI } from "../../mock/authService";
 
-export default function MataKuliahDetail() {
-  const { id } = useParams();
+export default function MataKuliahDetailPage() {
+  const { id, jurusanId } = useParams();
   const user = useAuthStore((state) => state.user);
-  if(!user) return null;
   const navigate = useNavigate();
-  const data = mockMataKuliahDetail[id || "1"];
+
+  const [data, setData] = useState<MataKuliahDetailType | undefined>(
+    mockMataKuliahDetail[id || "1"]
+  );
+
+  if (!user) return null;
+
+  const handleUploadUlangSuratTugas = async (file: File) => {
+    console.log("Upload ulang surat tugas untuk", data?.id);
+  }
 
   if (!data) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center flex-col gap-3 h-full">
-            Data tidak ditemukan
-            <button className="bg-dark-navy text-white font-medium px-5 py-3 hover:scale-101 transition rounded-lg" onClick={() => navigate(-1)}>Balik ke pembelajaran</button>
+          Data tidak ditemukan
+          <button className="bg-dark-navy text-white font-medium px-5 py-3 hover:scale-101 transition rounded-lg" onClick={() => navigate(-1)}>
+            Balik ke pembelajaran
+          </button>
         </div>
       </DashboardLayout>
     );
   }
 
+  const handleLinkSubmit = async ( field: keyof Pick<MataKuliahDetailType, "soal_uas" | "soal_uts" | "absensi" | "nilai" | "rps" | "berita_acara">, link: string) => {
+    await uploadHasilMataKuliahAPI(data.id.toString(), field, link);
+    setData((prev) => (prev ? { ...prev, [field]: link } : prev));
+  };
+
+   const breadcrumbItems = jurusanId
+    ? [
+        { label: "Pembelajaran", onClick: () => navigate("/tri-dharma/pembelajaran/jurusan"), },
+        { label: "Jurusan", onClick: () => navigate(`/tri-dharma/pembelajaran/`), },
+        { label: "Mata Kuliah", onClick: () => navigate(`/tri-dharma/pembelajaran/${jurusanId}`), },
+        { label: data.nama, isActive: true },
+    ] : [
+        { label: "Pembelajaran", onClick: () => navigate("/tri-dharma/pembelajaran"), },
+        { label: data.nama, isActive: true },
+    ];
   return (
     <DashboardLayout>
-        <div className="flex gap-2 items-center pb-3">
-            <span className="text-primary-gold">Pembelajaran</span><span><MdKeyboardArrowRight/></span><span onClick={() => navigate(-1)} className="hover:underline transition">Semester</span><span><MdKeyboardArrowRight/></span><span className="hover:underline transition">{data.nama}</span>
-        </div>
-        <div className="space-y-6">
-            <MataKuliahHeader data={data}/>            
+      {/* top navigation */}
+      <Breadcrumb items={breadcrumbItems}/>
+      <div className="space-y-6">
+        {/* header - mata kuliah detail */}
+        <MataKuliahHeader data={data} onUploadUlangSuratTugas={() => {handleUploadUlangSuratTugas}}/>
 
-            {/* Administrasi */}
-            <div>
-                <h2 className=" text-3xl font-bold text-dark-navy mb-5 " >
-                    Kelengkapan Administrasi
-                </h2>
-
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                    {ADMIN_ITEMS.map((item) => (
-                        <AdminCard
-                            key={item.field}
-                            item={item}
-                            jabatan={user.jabatan}
-                            value={data[item.field]}
-                            onFileSelect={(file) => { console.log('File selected:', file.name)}}
-                        />
-                    ))}
-                </div>
-            </div>
+        {/* Administrasi */}
+        <div>
+          <h2 className="text-xl lg:text-3xl font-bold text-dark-navy mb-5">Kelengkapan Administrasi</h2>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            {ADMIN_ITEMS.map((item) => (
+              <AdminCard
+                key={item.field}
+                item={item}
+                jabatan={user.jabatan ? user.jabatan : "null"}
+                value={data[item.field]}
+                onLinkSubmit={(link) => handleLinkSubmit(item.field, link)}
+              />
+            ))}
+          </div>
         </div>
+      </div>
     </DashboardLayout>
   );
 }

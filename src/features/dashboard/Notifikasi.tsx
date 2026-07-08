@@ -40,11 +40,11 @@ export default function NotifikasiPage(){
         return(
             <>
             {notifikasi.map((item) => (
-                <div key={item.id} onClick={() => handleRead(item)} className={`p-6 bg-white rounded-lg flex items-center flex-row gap-2`}>
-                    <MdCircle size={10} className={` ${item.dibaca ?  "text-light-blue":  "text-dark-navy" } mr-3`} />
+                <div key={item.id} onClick={() => handleRead(item)} className={`p-4 lg:p-6 bg-white rounded-lg flex items-center flex-row gap-2`}>
+                    <MdCircle size={20} className={` ${item.dibaca ?  "text-light-blue":  "text-dark-navy" } mr-3`} />
                     <div className="flex flex-col lg:flex-row lg:gap-4 lg:items-center">
-                    <p className="text-dark-navy text-[20px]">{item.pesan}</p>
-                    <p className="text-muted-text text-[18px]">{new Date(item.tgl_buat).toLocaleString()}</p>
+                    <p className="text-dark-navy text-md lg:text-lg">{item.pesan}</p>
+                    <p className="text-muted-text text-sm lg:text-[18px]">{new Date(item.tgl_buat).toLocaleString()}</p>
                     </div>
                 </div>
             ))}
@@ -56,7 +56,7 @@ export default function NotifikasiPage(){
         <DashboardLayout>
             <div className="flex items-center gap-2 mb-6">
                 <IoIosArrowBack size={24} className="text-dark-navy" onClick={() => navigate(-1)}/>
-                <h1 className="text-[22px] font-semibold">Notifikasi</h1>
+                <h1 className="text-lg lg:text-2xl font-semibold">Notifikasi</h1>
             </div>
             <div className="flex flex-col gap-3">
                 {renderContent()}

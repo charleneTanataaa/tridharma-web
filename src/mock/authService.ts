@@ -1,113 +1,241 @@
+import { LoginResponse, Role, User } from "../types/auth";
 import { mockUsers } from "./users";
-import { User } from "../types/auth";
-import { MataKuliahDetail, mockMataKuliahDetail, mockNotifikasi, mockPembelajaran, mockSiaran, Notifikasi, PembelajaranResponse, ReviewAdministrasi, Siaran } from "./data";
+import {
+  jurusanData,
+  MataKuliahDetail,
+  mockMataKuliahDetail,
+  mockNotifikasi,
+  mockPembelajaran,
+  mockPenelitian,
+  mockPenelitianDetail,
+  mockSiaran,
+  Notifikasi,
+  PembelajaranResponse,
+  PenelitianDetail,
+  PenelitianListResponse,
+  ReviewAdministrasi,
+  Siaran,
+} from "./data";
 
-const delay = (ms = 500) => new Promise((res) => setTimeout(res, ms));
+const MOCK_PASSWORD = "password123";
 
-export async function loginAPI(email: string, password:string) {
-    await delay();
-    const found = mockUsers.find(
-        (u) => u.email === email && u.password === password
-    );
-    if(!found) throw new Error("Email atau password salah");
-    return {access_token: found.access_token};
+function delay(ms = 500) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export async function getUserAPI(token: string): Promise<User>{
-    await delay();
-    const found = mockUsers.find((u) => u.access_token === token);
-    if(!found) throw new Error("Unauthorized");
-    const { password, access_token, ...user } = found;
-    return user;
+/* ================= AUTH ================= */
+
+export async function loginAPI(nim: string, password: string ): Promise<LoginResponse> {
+  await delay();
+  if (!nim || !password) {
+    return { success: false, message: "NIM dan Password wajib diisi" };
+  }
+  const user = mockUsers.find((u) => u.nim === nim);
+  if (!user || password !== MOCK_PASSWORD) {
+    return { success: false, message: "NIM atau Password salah" };
+  }
+  return {
+    success: true,
+    message: "Login berhasil",
+    user: {
+      id: user.id,
+      nama: user.nama,
+      nim: user.nim,
+      jabatan: user.jabatan,
+      jurusan: user.jurusan,
+      foto: user.foto,
+    },
+    token: Math.random().toString(36).slice(2) + Date.now().toString(36),
+  };
+}
+export async function getUserAPI(id: string): Promise<User> {
+  await delay();
+  const user = mockUsers.find((u) => u.id === id);
+  if (!user) throw new Error("User tidak ditemukan");
+  return user;
 }
 
-export async function sendOtpAPI(email: string): Promise<void>{
-    await delay();
-    const exists = mockUsers.find((u) => u.email === email);
-    if(!exists) throw new Error("Email tidak ditemukan");
-    console.log(`[MOCK] OTP sent to ${email}: 123456`);
+export async function sendOtpAPI() {
+  await delay();
 }
 
-export async function verifyOtpAPI(email: string, otp: string): Promise<void>{
-    await delay();
-    if(otp !== "123456") throw new Error("Kode OTP salah");
+export async function verifyOtpAPI() {
+  await delay();
 }
 
-export async function resetPasswordAPI(email: string, newPassword: string): Promise<void>{
-    await delay();
-    const user = mockUsers.find((u) => u.email === email);
-    if(!user) throw new Error("Email tidak ditemukan");
-    user.password = newPassword;
-    console.log(`[MOCK] Password updated for ${email}`)
+export async function resetPasswordAPI() {
+  await delay();
 }
 
-export async function getNotifikasiAPI(): Promise<Notifikasi[]>{
-    await delay();
-    return mockNotifikasi;
+/* ================= NOTIFIKASI ================= */
+
+export async function getNotifikasiAPI(): Promise<Notifikasi[]> {
+  await delay();
+  return mockNotifikasi;
 }
 
-export async function readNotifikasiAPI(id: string): Promise<void>{
-    await delay();
-    const found = mockNotifikasi.find((n) => n.id === id);
-    if(!found) throw new Error("Notifikasi tidak ditemukan");
-    found.dibaca = true;
+export async function readNotifikasiAPI(id: string) {
+  await delay();
+
+  const notif = mockNotifikasi.find((n) => n.id === id);
+
+  if (notif) notif.dibaca = true;
 }
 
-export async function getSiaranAPI(): Promise<Siaran[]>{
-    await delay();
-    return mockSiaran;
+/* ================= SIARAN ================= */
+
+export async function getSiaranAPI(): Promise<Siaran[]> {
+  await delay();
+  return mockSiaran;
 }
 
-export async function createSiaranAPI(pesan: string, user: User): Promise<Siaran> {
-    await delay();
-    const newSiaran: Siaran = {
-        id: String(Date.now()),
-        id_user: user.id,
-        nama: user.nama,
-        jabatan: user.jabatan,
-        jurusan: user.jurusan,
-        pesan,
-        tgl_buat: new Date().toISOString(),
-        hapus: true,
-    };
-    return newSiaran;
+export async function createSiaranAPI(
+  pesan: string,
+  user: User,
+  targetRoles: Role[]
+): Promise<Siaran> {
+  await delay();
+
+  return {
+    id: Date.now().toString(),
+    id_user: user.id,
+    nama: user.nama,
+    jabatan: user.jabatan,
+    jurusan: user.jurusan,
+    pesan,
+    tgl_buat: new Date().toISOString(),
+    target_roles: targetRoles,
+    hapus: false,
+  };
 }
 
-export async function getPembelajaran(idSem: string): Promise<PembelajaranResponse>{
-    await delay();
-    const data = mockPembelajaran[idSem];
-    if(!data) throw new Error("Semester tidak ditemukan");
-    return data;
+/* ================= PEMBELAJARAN ================= */
+
+export async function getPembelajaran(
+  idSem: string
+): Promise<PembelajaranResponse> {
+  await delay();
+
+  const data = mockPembelajaran[idSem];
+
+  if (!data) throw new Error("Semester tidak ditemukan");
+
+  return data;
 }
 
-export async function getHasilMataKuliahAPI(id: string): Promise<MataKuliahDetail>{
-    await delay();
-    const found = mockMataKuliahDetail[id];
-    if(!found) throw new Error("Data tidak ditemukan");
-    return found;
+export async function getHasilMataKuliahAPI(
+  id: string
+): Promise<MataKuliahDetail> {
+  await delay();
+
+  const data = mockMataKuliahDetail[id];
+
+  if (!data) throw new Error("Data tidak ditemukan");
+
+  return data;
 }
 
 export async function uploadHasilMataKuliahAPI(
-    id: string, 
-    field: keyof Pick<MataKuliahDetail, "soal_uas" | "soal_uts" | "absensi" | "nilai" | "rps" | "berita_acara">,
-    fileName: string
-): Promise<void>{
-    await delay();
-    const found = mockMataKuliahDetail[id];
-    if (!found) throw new Error("Data tidak ditemukan");
-    found[field]= fileName;
+  id: string,
+  field: keyof Pick<
+    MataKuliahDetail,
+    "soal_uas" | "soal_uts" | "absensi" | "nilai" | "rps" | "berita_acara"
+  >,
+  fileName: string
+) {
+  await delay();
+
+  mockMataKuliahDetail[id][field] = fileName;
 }
 
-export async function addReviewAPI(id: string, pesan: string, reviewer: string): Promise<ReviewAdministrasi>{
-    await delay();
-    const found = mockMataKuliahDetail[id];
-    if(!found) throw new Error('Data tidak ditemukan');
-    const review: ReviewAdministrasi = {
-        id: String(Date.now()),
-        reviewer,
-        pesan,
-        tgl_buat: new Date().toISOString(),
-    };
-    found.reviews.push(review);
-    return review;
+export async function addReviewAPI(
+  id: string,
+  pesan: string,
+  reviewer: string
+): Promise<ReviewAdministrasi> {
+  await delay();
+
+  const review = {
+    id: Date.now().toString(),
+    reviewer,
+    pesan,
+    tgl_buat: new Date().toISOString(),
+  };
+
+  mockMataKuliahDetail[id].reviews.push(review);
+
+  return review;
+}
+
+/* ================= PENELITIAN ================= */
+
+export async function getPenelitian(
+  idSem: string
+): Promise<PenelitianListResponse> {
+  await delay();
+
+  return mockPenelitian[idSem];
+}
+
+export async function getPenelitianDetailAPI(
+  id: string
+): Promise<PenelitianDetail> {
+  await delay();
+
+  return mockPenelitianDetail[id];
+}
+
+export async function uploadPenelitianAPI(
+  id: string,
+  field: keyof Pick<
+    PenelitianDetail,
+    "proposal" | "laporan_akhir" | "loa" | "hasil_review_sederajat"
+  >,
+  fileName: string
+) {
+  await delay();
+
+  mockPenelitianDetail[id][field] = fileName;
+}
+
+export async function addReviewPenelitianAPI(
+  id: string,
+  pesan: string,
+  reviewer: string
+): Promise<ReviewAdministrasi> {
+  await delay();
+
+  const review = {
+    id: Date.now().toString(),
+    reviewer,
+    pesan,
+    tgl_buat: new Date().toISOString(),
+  };
+
+  mockPenelitianDetail[id].reviews.push(review);
+
+  return review;
+}
+
+/* ================= DOSEN ================= */
+
+export type DosenListItem = User;
+
+export async function getDosenAPI(): Promise<DosenListItem[]> {
+  await delay();
+  return mockUsers.filter((u) => u.jabatan === "dosen");
+}
+
+export async function getDosenDetailAPI(id: string): Promise<User | null> {
+  await delay();
+  const dosen = mockUsers.find((u) => u.id === id);
+  return dosen || null;
+}
+
+/* ================= JURUSAN ================= */
+
+export async function getJurusan() {
+  await delay();
+
+  return jurusanData;
 }

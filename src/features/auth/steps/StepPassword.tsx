@@ -16,12 +16,16 @@ const schema = z.object({
     path: ["confirmPassword"],
 });
 
-export default function StepPassword({ email, onBack, mode="forgot" }){
+type PasswordForm = z.infer<typeof schema>;
+
+type StepPasswordProps={email:string; onBack: () => void; mode?: "forgot"|"register";};
+
+export default function StepPassword({ email, onBack, mode="forgot" }: StepPasswordProps){
     const navigate = useNavigate();
-    const {register, handleSubmit, formState: {errors}} = useForm({ resolver: zodResolver(schema), });
-    const onSubmit = async (data) => {
+    const {register, handleSubmit, formState: {errors}} = useForm<PasswordForm>({ resolver: zodResolver(schema), });
+    const onSubmit = async (data: PasswordForm) => {
         if(mode === "register"){
-            await resetPasswordAPI({ email, password: data.password})
+            // await resetPasswordAPI({ email, password: data.password})
             toast.success("Akun sudah diregister!");
 
         } else {
@@ -40,8 +44,8 @@ export default function StepPassword({ email, onBack, mode="forgot" }){
 
                 <div className="flex items-center justify-center flex-col gap-3">
                     <button type="submit" className="bg-dark-navy rounded-xl py-3 w-[300px] text-white font-semibold text-center">{mode === "forgot" ? "Ganti kata sandi" : "Buat Kata Sandi"}</button>
-                    <button type="button" onClick={() => navigate("/login")} className="text-sm text-light-gold hover:text-primary-gold transition">
-                        Balik ke login.
+                    <button type="button" onClick={onBack} className="text-sm text-light-gold hover:text-primary-gold transition">
+                        Kembali
                     </button>
                 </div>
             </form>

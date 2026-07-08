@@ -1,43 +1,48 @@
 import { FaFileAlt, FaUpload } from 'react-icons/fa';
 import StatusBadge from './StatusBadge';
 import {AdminItem} from '../../types/mataKuliah';
-import { useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from "sonner";
 
 type Props = {
     item: AdminItem;
     value: string | null;
     jabatan: string;
-    onFileSelect?: (file:File) => void;
+    onLinkSubmit?: (link: string) => void;
 }
 
-export default function AdminCard({item, value, jabatan, onFileSelect }: Props) {
+export default function AdminCard({item, value, jabatan, onLinkSubmit }: Props) {
   const uploaded = !!value;
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [ isEditing, setIsEditing ] = useState(!uploaded);
+  const [ inputValue, setInputValue ] = useState(value ?? "");
 
-  const handleButtonClick = () => {
-    fileInputRef.current?.click();
-  };
+  useEffect(() => {
+    setInputValue(value ?? "");
+    setIsEditing(!value);
+  }, [value]);
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if(!file) return;
-    // const formData = new FormData();
-    // formData.append('file', file);
-    // formData.append('label', item.label);
-    try{
-      await toast.promise(
+  const handleButtonClick = async () => {
+    // not upload yet, still in editing mode -> when click, submits
+    if(isEditing) {
+      const trimmed = inputValue.trim();
+      if(!trimmed){
+        toast.error("Link tidak boleh kosong.");
+        return;
+      }
+      try{
+        await toast.promise(
+          Promise.resolve(onLinkSubmit?.(trimmed)),
+        {loading: "Menyimpan upload...",
+          success: "Berhasil disimpan!",
+          error: "Gagal menyimpan link. Coba lagi."
+        });
+        setIsEditing(false);
+      } catch {
         
-        Promise.resolve(onFileSelect?.(file)),
-        {
-          loading: "Mengupload file...",
-          success: `${file.name} berhasil diupload!`,
-          error: `Upload gagal. Coba lagi.`,
-        }
-      );
-    } finally {
-      e.target.value = '';
+      } 
+      return;
     }
+    setIsEditing(true);
   };
   
   return (
@@ -46,8 +51,8 @@ export default function AdminCard({item, value, jabatan, onFileSelect }: Props) 
       <div className="p-5">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="font-semibold text-lg text-dark-navy">{item.label}</p>
-            <p className="text-sm text-muted-text mt-1">{item.description}</p>
+            <p className="font-semibold text-md lg:text-lg text-dark-navy">{item.label}</p>
+            <p className="text-xs lg:text-sm text-muted-text mt-1">{item.description}</p>
           </div>
           <StatusBadge uploaded={uploaded} />
         </div>
@@ -55,26 +60,33 @@ export default function AdminCard({item, value, jabatan, onFileSelect }: Props) 
 
       {/* Bottom File details & upload file*/}
       <div className=" border-t border-card-cream px-5 py-4 flex items-center justify-between gap-3 ">
-        {uploaded ? (
-          <div className="flex items-center gap-2 text-primary-gold text-sm">
-            <FaFileAlt size={14} />
-            <span className="truncate"> {value} </span>
-          </div>
-        ) : (
-          <span className="text-sm text-muted-text">Belum ada file</span>
-        )}
-
-        { jabatan === "dosen" && (
+        { jabatan === "dosen" ? (
           <>
-            <input type="file" ref={fileInputRef} onChange={handleFileChange}
-            className='hidden' accept=".pdf,.doc,.docs,.png,.jpg,.jpeg" />
-            <button onClick={handleButtonClick} className="bg-primary-gold text-dark-navy font-medium px-4 py-2 rounded-lg flex items-center gap-2">
-                <FaUpload size={14} />
-                {uploaded ? "Update" : "Upload"}
-            </button>
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            {uploaded && !isEditing && <FaFileAlt size={14} className='text-primary-gold shrink-0' />}
+            <input type="text" value={inputValue} onChange={(e) => setInputValue(e.target.value)} disabled={!isEditing} placeholder='Masukkan link' 
+              className={`w-full text-sm rounded-lg px-3 py-2 border outline-none ${
+                isEditing 
+                ? "border-gray-300 bg-white text-dark-navy"
+                : "border-transparent bg-gray-100 text-muted-text cursor-not-allowed"
+              }`} 
+              />
+          </div>
+          <button onClick={handleButtonClick} className="bg-primary-gold text-sm lg:text-base text-dark-navy font-medium px-4 py-2 rounded-lg flex items-center gap-2 shrink-0">
+            <FaUpload size={14}/>{!uploaded ? "Upload" : isEditing ? "Submit" : "Update"}
+          </button>
           </>
+        ) : (
+          uploaded ? (
+            <div className="flex items-center gap-2 text-primary-gold text-sm">
+              <FaFileAlt size={14}/><span className="truncate">{value}</span>
+            </div>
+          ) : (
+            <span className="text-sm text-muted-text">Belum diupload</span>
+          )
         )}
       </div>
     </div>
   );
 }
+

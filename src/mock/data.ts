@@ -1,8 +1,39 @@
+import { Role } from "../types/auth";
+
 export type Semester = {
   id: string;
   label: string;
   active: boolean;
 };
+
+export interface Jurusan {
+    id: number;
+    nama: string;
+    jumlahMatkul: number;
+}
+
+export const jurusanData: Jurusan[] = [
+    {
+        id: 1,
+        nama: "Teknik Informatika",
+        jumlahMatkul: 42,
+    },
+    {
+        id: 2,
+        nama: "Sistem Informasi",
+        jumlahMatkul: 37,
+    },
+    {
+        id: 3,
+        nama: "Manajemen",
+        jumlahMatkul: 28,
+    },
+    {
+        id: 4,
+        nama: "Akuntansi",
+        jumlahMatkul: 31,
+    },
+];
 
 export type MataKuliah = {
   id: number;
@@ -21,7 +52,6 @@ export type ReviewAdministrasi = {
     pesan: string;
     tgl_buat: string;
 }
-
 
 export type MataKuliahDetail = {
     id: number;
@@ -60,6 +90,7 @@ export type Siaran = {
     jurusan: string;
     pesan: string;
     tgl_buat: string;
+    target_roles: Role[];
     hapus: boolean;
 }
 
@@ -165,6 +196,7 @@ export const mockSiaran: Siaran[] = [
         jurusan: "Informatika",
         pesan: "Mohon seluruh dosen segera melengkapi data profil akademik sebelumnya",
         tgl_buat: "2024-03-01T07:00:00Z",
+        target_roles: ["dosen"],
         hapus:false,
     },
     {
@@ -175,6 +207,126 @@ export const mockSiaran: Siaran[] = [
         jurusan: "Informatika",
         pesan: "Segera seluruh dosen segera melengkapi data profil akademik sebelumnya",
         tgl_buat: "2024-03-01T07:00:00Z",
+        target_roles: ["admin", "dekan", "dosen", "kaprodi", "lppm", "prodi", "tata-usaha"],
         hapus:false,
     }
 ]
+
+export type StatusPenelitian = "accepted" | "rejected" | "pending";
+
+export type Penelitian = {
+  id: number;
+  judul: string;
+  kode: string;
+  sks: number;
+  status: StatusPenelitian;
+};
+
+export type PenelitianListResponse = {
+  penelitian: Penelitian[];
+};
+
+export type PenelitianDetail = {
+  id: number;
+  judul: string;
+  kode: string;
+  ketua: string;
+  periode: string;
+  status: StatusPenelitian;
+
+  proposal: string | null;
+  laporan_akhir: string | null;
+  loa: string | null; 
+  hasil_review_sederajat: string | null;
+
+  reviews: ReviewAdministrasi[]; 
+};
+
+export const mockPenelitian: Record<string, PenelitianListResponse> = {
+  s1: {
+    penelitian: [
+      { id: 1, judul: "Pengembangan Algoritma untuk Deteksi Dini Diabetes pada Pasien", kode: "IF2204", sks: 3, status: "accepted" },
+      { id: 2, judul: "Analisis Sentimen Media Sosial Menggunakan Deep Learning", kode: "IF2330", sks: 3, status: "rejected" },
+      { id: 3, judul: "Sistem Rekomendasi Produk Berbasis Collaborative Filtering", kode: "IF1984", sks: 3, status: "pending" },
+      { id: 4, judul: "Optimasi Rute Distribusi dengan Algoritma Genetika", kode: "IF1002", sks: 4, status: "accepted" },
+    ],
+  },
+  s2: {
+    penelitian: [
+      { id: 6, judul: "Penerapan Blockchain untuk Keamanan Data Akademik", kode: "IF2105", sks: 3, status: "accepted" },
+    ],
+  },
+  s3: {
+    penelitian: [],
+  },
+};
+
+export const mockPenelitianDetail: Record<string, PenelitianDetail> = {
+  "1": {
+    id: 1,
+    judul: "Pengembangan Algoritma untuk Deteksi Dini Diabetes pada Pasien",
+    kode: "IF2204",
+    ketua: "Ferawaty, S.Kom., M.T.",
+    periode: "2026 - 2027",
+    status: "accepted",
+    proposal: "Proposal_2025.pdf",
+    laporan_akhir: null,
+    loa: "RPS_2026.pdf",
+    hasil_review_sederajat: null,
+    reviews: [
+      {
+        id: "r1",
+        reviewer: "LPPM UPH",
+        pesan:
+          "Metodologi penelitian pada bab 3 perlu diperjelas terkait pembagian dataset training dan testing. Mohon lampirkan juga surat kesediaan mitra laboratorium untuk penggunaan data sekunder.",
+        tgl_buat: "2026-08-14T09:00:00Z",
+      },
+    ],
+  },
+  "2": {
+    id: 2,
+    judul: "Analisis Sentimen Media Sosial Menggunakan Deep Learning",
+    kode: "IF2330",
+    ketua: "Ferawaty, S.Kom., M.T.",
+    periode: "2026 - 2027",
+    status: "rejected",
+    proposal: "Proposal_Sentimen.pdf",
+    laporan_akhir: null,
+    loa: null,
+    hasil_review_sederajat: null,
+    reviews: [
+      {
+        id: "r2",
+        reviewer: "LPPM UPH",
+        pesan: "Topik penelitian tumpang tindih dengan penelitian yang sudah didanai tahun sebelumnya.",
+        tgl_buat: "2026-08-10T09:00:00Z",
+      },
+    ],
+  },
+  "3": {
+    id: 3,
+    judul: "Sistem Rekomendasi Produk Berbasis Collaborative Filtering",
+    kode: "IF1984",
+    ketua: "Ferawaty, S.Kom., M.T.",
+    periode: "2026 - 2027",
+    status: "pending",
+    proposal: "Proposal_Rekomendasi.pdf",
+    laporan_akhir: null,
+    loa: null,
+    hasil_review_sederajat: null,
+    reviews: [],
+  },
+  "4": {
+    id: 4,
+    judul: "Optimasi Rute Distribusi dengan Algoritma Genetika",
+    kode: "IF1944",
+    ketua: "Ferawaty, S.Kom., M.T.",
+    periode: "2026 - 2027",
+    status: "accepted",
+    proposal: "Proposal_Rekomendasi.pdf",
+    laporan_akhir: null,
+    loa: null,
+    hasil_review_sederajat: null,
+    reviews: [],
+  },
+};

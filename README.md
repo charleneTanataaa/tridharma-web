@@ -14,6 +14,8 @@ npm run dev
 - layouts -> Auth Layout & Dashboard Layout
 - stores -> state manangement (Zustand)
 - lib -> helpers (clsx)
+- mock -> data
+- types -> variable types declaration
 - routes 
 
 # LIBRARY
@@ -43,7 +45,15 @@ npm run dev
 7. Navigate to ("/login")
 
 # REGISTER
-* same as forget password
+1. User enter email (step 1)
+2. Validate email
+3. Send OTP to email 
+4. User enter OTP (step 2)
+5. Validate OTP
+6. User fills profile (step 3)
+7. User enter password and confirm password (step 3)
+8. Navigate to ("/login")
+
 
 # DASHBOARD
 1. Welcome sign

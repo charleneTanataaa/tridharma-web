@@ -9,6 +9,6 @@ import './index.css';
 createRoot(document.getElementById('root')!).render(  
     <StrictMode>
         <RouterProvider router={router}/>
-        <Toaster richColors position='top-center' />
+        <Toaster richColors position='top-center' closeButton={true}/>
     </StrictMode>
 )
