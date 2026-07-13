@@ -7,7 +7,7 @@ import DashboardLayout from "../../layouts/DashboardLayout";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../stores/auth.store";
 import type { Certificate, Role } from "../../types/auth";
-import { mockUsers, mockCertificates } from "../../mock/users";
+import { mockUsers, mockCertificates } from "../../mock/db";
 
 // ----- helpers -----
 function getInitials(nama: string) {

@@ -1,4 +1,5 @@
 import { IoMdClose } from "react-icons/io";
+import { useAuthStore } from "../../stores/auth.store";
 
 type AddSemesterModalProps = {
     open: boolean;
@@ -10,7 +11,20 @@ type AddSemesterModalProps = {
 };
 
 export default function AddSemesterModal({ open, onClose, onSubmit } : AddSemesterModalProps) {
+    const user = useAuthStore((state) => state.user);
     if(!open) return null;
+
+    if (user?.jabatan !== "tata-usaha") {
+        return (
+            <div onClick={onClose} className="fixed top-0 left-0 z-100 bg-black/80 w-screen h-screen flex items-center justify-center">
+                <div className="bg-white p-5 rounded-lg text-center min-w-md" onClick={(e) => e.stopPropagation()}>
+                    <h3 className="font-bold text-red-600 mb-2">Akses Ditolak</h3>
+                    <p className="text-gray-600 mb-4 text-sm">Hanya Tata Usaha yang dapat menambahkan semester baru.</p>
+                    <button onClick={onClose} className="bg-primary-gold px-4 py-2 rounded-lg text-sm font-semibold">Tutup</button>
+                </div>
+            </div>
+        );
+    }
     return (
         <div onClick={onClose} className="fixed top-0 left-0 z-100 bg-black/80 w-screen h-screen flex items-center justify-center">
             <div className="bg-white p-5 rounded-lg min-w-md" onClick={(e) => e.stopPropagation()}>

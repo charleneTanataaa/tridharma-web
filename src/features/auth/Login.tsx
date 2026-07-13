@@ -37,7 +37,7 @@ export default function Login() {
   const onSubmit: SubmitHandler<LoginForm> = async (data) => {
     try {
       const response = await loginAPI(data.email, data.password);
-      if(!response.success || !response.user || !response.token){
+      if (!response.success || !response.user || !response.token) {
         throw new Error(response.message || "Email atau password salah")
       }
       setUser(response.user);
@@ -101,20 +101,12 @@ export default function Login() {
           </button>
         </div>
         <div className="flex flex-col gap-3 items-center justify-center">
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="text-sm w-[300px] text-white bg-dark-navy hover:bg-medium-navy py-2 rounded-lg transition disabled:opacity-60 disabled:cursor-not-allowed"
+          <button type="submit" disabled={isSubmitting}
+            className="text-sm w-full lg:w-[300px] text-white bg-dark-navy hover:bg-medium-navy py-2 rounded-lg transition disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {isSubmitting ? "Memproses..." : "Masuk"}
           </button>
-          <button
-            onClick={() => navigate("/register")}
-            type="button"
-            className="text-sm text-primary-gold transition-colors hover:text-light-gold"
-          >
-            Belum punya akun? <span className="underline">Register</span>
-          </button>
+         
         </div>
       </form>
     </AuthLayout>

@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom"
 import { useAuthStore } from "../../stores/auth.store";
 import { useEffect, useState } from "react";
-import { Notifikasi } from "../../mock/data";
+import { Notifikasi } from "../../mock/db";
 import { getNotifikasiAPI, readNotifikasiAPI } from "../../mock/authService";
 import DashboardLayout from "../../layouts/DashboardLayout";
 import { MdCircle, MdNotifications } from "react-icons/md";

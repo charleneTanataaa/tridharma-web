@@ -1,145 +1,471 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { FaFileDownload, FaPaperclip } from "react-icons/fa";
+import { FaFileDownload, FaPaperclip, FaUpload } from "react-icons/fa";
+import { toast } from "sonner";
 
 import DashboardLayout from "../../layouts/DashboardLayout";
 import Breadcrumb from "../../components/ui/Breadcrumb";
 import { useFetchData } from "../../hooks/useFetchData";
 import { StateDisplay } from "../../components/ui/StateDisplay";
-import { getPenelitianDetailAPI, uploadPenelitianAPI } from "../../mock/authService";
-import type { StatusPenelitian, PenelitianDetail } from "../../mock/data";
+import { useAuthStore } from "../../stores/auth.store";
+import {
+    getPenelitianDetail,
+    uploadPenelitianAPI,
+    uploadProposalPenelitianAPI,
+    approveKaprodiPenelitianAPI,
+    rejectKaprodiPenelitianAPI,
+    approveLPPMAPI,
+    rejectLPPMAPI,
+    uploadSuratTugasPenelitianAPI,
+} from "../../mock/authService";
+import type { StatusPenelitian, PenelitianDetail } from "../../mock/db";
 
 const STATUS_PILL: Record<StatusPenelitian, { label: string; className: string }> = {
-  accepted: { label: "ACCEPTED", className: "bg-green-100 text-green-700" },
-  rejected: { label: "REJECTED", className: "bg-red-100 text-red-700" },
-  pending: { label: "PENDING REVIEW", className: "bg-amber-100 text-amber-700" },
+    accepted:            { label: "ACCEPTED",             className: "bg-green-100 text-green-700" },
+    rejected:            { label: "REJECTED",             className: "bg-red-100 text-red-700" },
+    pending:             { label: "PENDING REVIEW",       className: "bg-amber-100 text-amber-700" },
+    none:                { label: "BELUM ADA PROPOSAL",   className: "bg-gray-100 text-gray-500" },
+    pending_kaprodi:     { label: "MENUNGGU KAPRODI",     className: "bg-blue-100 text-blue-700" },
+    revision_kaprodi:    { label: "REVISI KAPRODI",       className: "bg-amber-100 text-amber-700" },
+    pending_lppm:        { label: "MENUNGGU LPPM",        className: "bg-blue-100 text-blue-700" },
+    pending_surat_tugas: { label: "MENUNGGU SURAT TUGAS", className: "bg-purple-100 text-purple-700" },
+    ongoing:             { label: "BERJALAN",             className: "bg-green-100 text-green-700" },
 };
 
 type DokumenField = "proposal" | "laporan_akhir" | "loa" | "hasil_review_sederajat";
 
 const DOKUMEN_CONFIG: { field: DokumenField; label: string; deskripsi: string }[] = [
-  { field: "proposal", label: "Proposal Penelitian", deskripsi: "Dokumen usulan lengkap" },
-  { field: "laporan_akhir", label: "Laporan Akhir", deskripsi: "Laporan hasil penelitian" },
-  { field: "loa", label: "Letter of Acceptance", deskripsi: "Bukti penerimaan publikasi jurnal" },
-  { field: "hasil_review_sederajat", label: "Hasil Review Sederajat", deskripsi: "Berkas soal ujian akhir semester" },
+    { field: "proposal", label: "Proposal Penelitian", deskripsi: "Dokumen usulan lengkap" },
+    { field: "laporan_akhir", label: "Laporan Akhir", deskripsi: "Laporan hasil penelitian" },
+    { field: "loa", label: "Letter of Acceptance", deskripsi: "Bukti penerimaan publikasi jurnal" },
+    { field: "hasil_review_sederajat", label: "Hasil Review Sederajat", deskripsi: "Hasil review dari reviewer sederajat" },
 ];
 
 function formatTanggal(iso: string) {
-  return new Date(iso).toLocaleDateString("id-ID", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  });
+    return new Date(iso).toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" });
 }
 
-function DokumenCard({label, deskripsi, fileName, onUpload, }: { label: string; deskripsi: string; fileName: string | null; onUpload: () => void;}) {
+function DokumenCard({ label, deskripsi, fileName, canUpload, onUpload }: {
+    label: string;
+    deskripsi: string;
+    fileName: string | null;
+    canUpload: boolean;
+    onUpload: (file: File) => void;
+}) {
+    const fileRef = useRef<HTMLInputElement>(null);
     const isTerunggah = fileName !== null;
     return (
         <div className="bg-white border border-card-cream rounded-2xl">
-        <div className="p-5 flex justify-between items-start">
-            <div>
-                <p className="font-semibold text-md text-dark-navy">{label}</p>
-                <p className="text-muted-text text-xs lg:text-sm mt-1">{deskripsi}</p>
+            <div className="p-5 flex justify-between items-start">
+                <div>
+                    <p className="font-semibold text-md text-dark-navy">{label}</p>
+                    <p className="text-muted-text text-xs lg:text-sm mt-1">{deskripsi}</p>
+                </div>
+                <span className={`text-[11px] font-semibold px-3 py-1 rounded-full whitespace-nowrap ${isTerunggah ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                    {isTerunggah ? "TERUNGGAH" : "BELUM"}
+                </span>
             </div>
-            <span
-            className={`text-[11px] font-semibold px-3 py-1 rounded-full whitespace-nowrap ${
-                isTerunggah ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-            }`}
-            >
-            {isTerunggah ? "TERUNGGAH" : "BELUM"}
-            </span>
+            <div className="border-t border-card-cream px-5 py-4">
+                {isTerunggah
+                    ? <div className="flex items-center gap-2 text-xs lg:text-sm text-dark-navy"><FaPaperclip size={12} /> {fileName}</div>
+                    : <p className="text-xs lg:text-sm text-muted-text">Belum diunggah.</p>}
+                {canUpload && (
+                    <>
+                        <input type="file" accept=".pdf,.doc,.docx" hidden ref={fileRef}
+                            onChange={(e) => e.target.files?.[0] && onUpload(e.target.files[0])} />
+                        <button onClick={() => fileRef.current?.click()}
+                            className="flex font-medium text-dark-navy gap-2 bg-primary-gold w-full mt-4 rounded-lg px-4 py-2.5 items-center justify-center text-sm">
+                            <FaFileDownload size={16} />
+                            {isTerunggah ? "Update" : "Unggah"}
+                        </button>
+                    </>
+                )}
+            </div>
         </div>
-
-        <div className="border-t border-card-cream px-5 py-4">
-            {isTerunggah 
-                ? ( <div className="flex items-center gap-2 text-xs lg:text-sm text-dark-navy"><FaPaperclip size={12} /> {fileName}</div> ) 
-                : ( <p className="text-xs lg:text-sm text-dark-navy">Belum diunggah.</p> )}
-
-            <button
-                onClick={onUpload}
-                className="flex font-medium text-dark-navy gap-2 bg-primary-gold w-full mt-4 rounded-lg px-4 py-2.5 items-center justify-center text-sm"
-            >
-                <FaFileDownload size={16} />
-                {isTerunggah ? "Update" : "Unggah"}
-            </button>
-        </div>
-    </div>
-  );
+    );
 }
 
 export default function PenelitianDetail() {
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
-    const [uploadingField, setUploadingField] = useState<DokumenField | null>(null);
+    const user = useAuthStore((state) => state.user);
 
-    const { data, loading, error } = useFetchData<PenelitianDetail>({
-        fetchFn: () => getPenelitianDetailAPI(id ?? ""),
+    const isKaprodi = user?.jabatan === "kaprodi";
+    const isLPPM = user?.jabatan === "lppm";
+    const isTataUsaha = user?.jabatan === "tata-usaha";
+    const isDosen = user?.jabatan === "dosen";
+
+    const [isActing, setIsActing] = useState(false);
+    const [rejectReason, setRejectReason] = useState("");
+    const [showRejectInput, setShowRejectInput] = useState(false);
+    const [revisionFile, setRevisionFile] = useState<File | null>(null);
+
+    const fileRevisiRef = useRef<HTMLInputElement>(null);
+    const fileSuratTugasRef = useRef<HTMLInputElement>(null);
+    const fileProposalRef = useRef<HTMLInputElement>(null);
+
+    const { data, loading, error, setData } = useFetchData<PenelitianDetail>({
+        fetchFn: () => getPenelitianDetail(id ?? ""),
         dependencies: [id],
     });
-    const visibleDokumenConfig = data?.status === "accepted" ? DOKUMEN_CONFIG : DOKUMEN_CONFIG.filter((d) => d.field === "proposal");
+
+    if (!user) return null;
+
+    const status = data?.status;
+
+    /* ─── handlers ─── */
+
+    const handleUploadProposal = async (file: File) => {
+        if (!data) return;
+        setIsActing(true);
+        try {
+            await uploadProposalPenelitianAPI(data.id.toString(), file.name);
+            setData((prev) => prev ? { ...prev, proposal: file.name, status: "pending_kaprodi" } : prev);
+            toast.success("Proposal berhasil diupload");
+        } catch { toast.error("Gagal upload proposal"); }
+        finally { setIsActing(false); }
+    };
+
+    const handleApproveKaprodi = async () => {
+        if (!data) return;
+        setIsActing(true);
+        try {
+            await approveKaprodiPenelitianAPI(data.id.toString());
+            setData((prev) => prev ? { ...prev, status: "pending_lppm", kaprodi_rejection_reason: undefined, kaprodi_revision_file: undefined } : prev);
+            toast.success("Proposal disetujui");
+        } catch { toast.error("Gagal menyetujui"); }
+        finally { setIsActing(false); }
+    };
+
+    const handleRejectKaprodi = async () => {
+        if (!rejectReason.trim()) { toast.error("Masukkan alasan penolakan"); return; }
+        if (!data) return;
+        setIsActing(true);
+        try {
+            await rejectKaprodiPenelitianAPI(data.id.toString(), rejectReason, revisionFile?.name);
+            setData((prev) => prev ? { ...prev, status: "revision_kaprodi", kaprodi_rejection_reason: rejectReason, kaprodi_revision_file: revisionFile?.name ?? null } : prev);
+            setShowRejectInput(false);
+            setRejectReason("");
+            setRevisionFile(null);
+            toast.success("Proposal ditolak");
+        } catch { toast.error("Gagal menolak"); }
+        finally { setIsActing(false); }
+    };
+
+    const handleApproveLPPM = async () => {
+        if (!data) return;
+        setIsActing(true);
+        try {
+            await approveLPPMAPI(data.id.toString());
+            setData((prev) => prev ? { ...prev, status: "pending_surat_tugas", didanai: true } : prev);
+            toast.success("Penelitian disetujui — akan didanai");
+        } catch { toast.error("Gagal menyetujui"); }
+        finally { setIsActing(false); }
+    };
+
+    const handleRejectLPPM = async () => {
+        if (!rejectReason.trim()) { toast.error("Masukkan alasan"); return; }
+        if (!data) return;
+        setIsActing(true);
+        try {
+            await rejectLPPMAPI(data.id.toString(), rejectReason);
+            setData((prev) => prev ? { ...prev, status: "pending_surat_tugas", didanai: false, lppm_rejection_reason: rejectReason } : prev);
+            setShowRejectInput(false);
+            setRejectReason("");
+            toast.success("Penelitian tidak didanai — proses dilanjutkan");
+        } catch { toast.error("Gagal memproses"); }
+        finally { setIsActing(false); }
+    };
+
+    const handleUploadSuratTugas = async (file: File) => {
+        if (!data) return;
+        setIsActing(true);
+        try {
+            await uploadSuratTugasPenelitianAPI(data.id.toString(), file.name);
+            setData((prev) => prev ? { ...prev, surat_tugas: file.name, status: "ongoing" } : prev);
+            toast.success("Surat tugas berhasil diupload");
+        } catch { toast.error("Gagal upload surat tugas"); }
+        finally { setIsActing(false); }
+    };
+
+    const handleUploadDokumen = async (field: DokumenField, file: File) => {
+        if (!data) return;
+        try {
+            await uploadPenelitianAPI(data.id.toString(), field, file.name);
+            setData((prev) => prev ? { ...prev, [field]: file.name } : prev);
+            toast.success("Dokumen berhasil diupload");
+        } catch { toast.error("Gagal upload dokumen"); }
+    };
+
+    /* ─── action widget (header, right side) ─── */
+
+    const renderActionWidget = () => {
+        if (!data) return null;
+
+        // Surat tugas tersedia → semua role bisa unduh
+        if (data.surat_tugas) {
+            return (
+                <a href={data.surat_tugas} target="_blank" rel="noreferrer"
+                    className="flex font-medium text-dark-navy gap-2 bg-primary-gold rounded-lg px-4 py-3 items-center justify-center text-sm whitespace-nowrap">
+                    <FaFileDownload size={16} /> Unduh Surat Tugas
+                </a>
+            );
+        }
+
+        // Dosen: upload / re-upload proposal
+        if (isDosen && (status === "none" || status === "revision_kaprodi")) {
+            return (
+                <div className="flex flex-col gap-2 w-full">
+                    {status === "revision_kaprodi" && data.kaprodi_rejection_reason && (
+                        <div className="text-red-400 text-xs">
+                            <p>Ditolak: {data.kaprodi_rejection_reason}</p>
+                            {data.kaprodi_revision_file && (
+                                <a href={data.kaprodi_revision_file} target="_blank" rel="noreferrer"
+                                    className="underline mt-0.5 inline-flex items-center gap-1">
+                                    <FaPaperclip size={9} /> Unduh file revisi
+                                </a>
+                            )}
+                        </div>
+                    )}
+                    <input type="file" accept=".pdf,.doc,.docx" hidden ref={fileProposalRef}
+                        onChange={(e) => e.target.files?.[0] && handleUploadProposal(e.target.files[0])} />
+                    <button onClick={() => fileProposalRef.current?.click()} disabled={isActing}
+                        className="flex font-medium text-dark-navy gap-2 bg-primary-gold w-full rounded-lg px-4 py-3 items-center justify-center disabled:opacity-60 text-sm">
+                        <FaUpload size={14} />
+                        {status === "revision_kaprodi" ? "Upload Ulang Proposal" : "Upload Proposal"}
+                    </button>
+                </div>
+            );
+        }
+
+        // Kaprodi: approve / reject saat pending_kaprodi
+        if (isKaprodi && status === "pending_kaprodi") {
+            return (
+                <div className="flex flex-col gap-2 w-full">
+                    {!showRejectInput ? (
+                        <div className="flex gap-2">
+                            <button onClick={handleApproveKaprodi} disabled={isActing}
+                                className="flex-1 bg-green-500 hover:bg-green-600 text-white font-medium rounded-lg px-3 py-2 text-sm disabled:opacity-60">
+                                ✓ Setujui
+                            </button>
+                            <button onClick={() => setShowRejectInput(true)}
+                                className="flex-1 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg px-3 py-2 text-sm">
+                                ✕ Tolak
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="flex flex-col gap-2">
+                            <textarea value={rejectReason} onChange={(e) => setRejectReason(e.target.value)}
+                                placeholder="Alasan penolakan..."
+                                className="w-full border border-light-blue bg-medium-navy text-white rounded-lg px-3 py-2 text-sm focus:outline-none resize-none"
+                                rows={2} />
+                            <div className="flex items-center gap-2">
+                                <input type="file" accept=".pdf,.doc,.docx" hidden ref={fileRevisiRef}
+                                    onChange={(e) => setRevisionFile(e.target.files?.[0] ?? null)} />
+                                <button onClick={() => fileRevisiRef.current?.click()}
+                                    className="flex items-center gap-1 text-xs text-light-blue border border-light-blue rounded px-2 py-1.5 whitespace-nowrap">
+                                    <FaPaperclip size={10} />
+                                    {revisionFile ? revisionFile.name.slice(0, 12) + "…" : "File Revisi (opsional)"}
+                                </button>
+                            </div>
+                            <div className="flex gap-2">
+                                <button onClick={handleRejectKaprodi} disabled={isActing}
+                                    className="flex-1 bg-red-500 text-white rounded-lg px-3 py-2 text-sm disabled:opacity-60">
+                                    Kirim Penolakan
+                                </button>
+                                <button onClick={() => { setShowRejectInput(false); setRevisionFile(null); setRejectReason(""); }}
+                                    className="flex-1 bg-muted-text text-white rounded-lg px-3 py-2 text-sm">
+                                    Batal
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                    <a href={data.proposal ?? "#"} target="_blank" rel="noreferrer"
+                        className="text-light-blue text-xs underline text-center">
+                        Lihat dokumen proposal
+                    </a>
+                </div>
+            );
+        }
+
+        // LPPM: setujui (didanai) / tolak (tidak didanai, proses lanjut) saat pending_lppm
+        if (isLPPM && status === "pending_lppm") {
+            return (
+                <div className="flex flex-col gap-2 w-full">
+                    {!showRejectInput ? (
+                        <div className="flex flex-col gap-2">
+                            <button onClick={handleApproveLPPM} disabled={isActing}
+                                className="w-full bg-green-500 hover:bg-green-600 text-white font-medium rounded-lg px-3 py-2 text-sm disabled:opacity-60">
+                                ✓ Setujui (Didanai)
+                            </button>
+                            <button onClick={() => setShowRejectInput(true)}
+                                className="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium rounded-lg px-3 py-2 text-sm">
+                                ✕ Tidak Didanai
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="flex flex-col gap-2">
+                            <p className="text-amber-400 text-xs">⚠ Penelitian tetap lanjut tanpa pendanaan.</p>
+                            <textarea value={rejectReason} onChange={(e) => setRejectReason(e.target.value)}
+                                placeholder="Alasan tidak didanai..."
+                                className="w-full border border-light-blue bg-medium-navy text-white rounded-lg px-3 py-2 text-sm focus:outline-none resize-none"
+                                rows={2} />
+                            <div className="flex gap-2">
+                                <button onClick={handleRejectLPPM} disabled={isActing}
+                                    className="flex-1 bg-orange-500 text-white rounded-lg px-3 py-2 text-sm disabled:opacity-60">
+                                    Konfirmasi
+                                </button>
+                                <button onClick={() => { setShowRejectInput(false); setRejectReason(""); }}
+                                    className="flex-1 bg-muted-text text-white rounded-lg px-3 py-2 text-sm">
+                                    Batal
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                    <a href={data.proposal ?? "#"} target="_blank" rel="noreferrer"
+                        className="text-light-blue text-xs underline text-center">
+                        Lihat dokumen proposal
+                    </a>
+                </div>
+            );
+        }
+
+        // TU: upload surat tugas saat pending_surat_tugas
+        if (isTataUsaha && status === "pending_surat_tugas") {
+            return (
+                <div className="flex flex-col gap-2 w-full">
+                    {data.didanai === false && (
+                        <p className="text-amber-400 text-xs">⚠ Tidak didanai LPPM — proses tetap lanjut</p>
+                    )}
+                    <input type="file" accept=".pdf" hidden ref={fileSuratTugasRef}
+                        onChange={(e) => e.target.files?.[0] && handleUploadSuratTugas(e.target.files[0])} />
+                    <button onClick={() => fileSuratTugasRef.current?.click()} disabled={isActing}
+                        className="flex font-medium text-dark-navy gap-2 bg-primary-gold w-full rounded-lg px-4 py-3 items-center justify-center disabled:opacity-60 text-sm">
+                        <FaUpload size={14} /> Upload Surat Tugas
+                    </button>
+                </div>
+            );
+        }
+
+        // Passive state untuk semua role × status lainnya
+        const passiveLabels: Partial<Record<StatusPenelitian, string>> = {
+            none:                "Belum ada proposal",
+            pending_kaprodi:     "Menunggu persetujuan Kaprodi",
+            revision_kaprodi:    "Menunggu revisi dari Dosen",
+            pending_lppm:        "Menunggu persetujuan LPPM",
+            pending_surat_tugas: "Menunggu surat tugas dari Tata Usaha",
+            ongoing:             "Penelitian sedang berjalan",
+        };
+        const label = status ? passiveLabels[status] : undefined;
+        return label ? (
+            <div className="text-muted-text text-sm text-center px-3 py-3 border border-muted-text rounded-lg w-full">
+                {label}
+            </div>
+        ) : null;
+    };
+
+    /* ─── dokumen section ─── */
+
+    // Proposal visible di semua tahap; laporan_akhir/loa/hasil_review hanya saat ongoing
+    const visibleDocs = status === "ongoing" ? DOKUMEN_CONFIG : DOKUMEN_CONFIG.filter((d) => d.field === "proposal");
+    // Proposal upload dihandle oleh header widget; final docs hanya dosen saat ongoing
+    const canUploadField = (field: DokumenField): boolean => {
+        if (field === "proposal") return false;
+        return isDosen && status === "ongoing";
+    };
+
+    /* ─── render ─── */
 
     return (
         <DashboardLayout>
-        <Breadcrumb items={[{ label: "Penelitian", isActive: true }, {label: "Semester", onClick: () => navigate(-1)}, { label: "Detail Penelitian", isActive: true }]} />
+            <Breadcrumb items={[
+                { label: "Penelitian", onClick: () => navigate(-1) },
+                { label: "Detail Penelitian", isActive: true },
+            ]} />
 
-        {loading && <StateDisplay type="loading" />}
-        {error && <StateDisplay type="error" message={error} />}
+            {loading && <StateDisplay type="loading" />}
+            {error && <StateDisplay type="error" message={error} />}
 
-        {!loading && !error && data && (
-            <>
-            {/* header - judul, ketua, periode, status, unduh surat tugas */}
-            <div className="bg-dark-navy flex flex-col lg:flex-row justify-between rounded-2xl w-full px-5 lg:px-10 py-6 gap-4">
-                <div>
-                <h1 className="text-2xl  text-white font-semibold">{data.judul}</h1>
-                <p className="text-light-blue font-medium text-lg mt-2">
-                    Ketua Penelitian: {data.ketua}
-                </p>
-                <p className="text-light-blue text-sm mt-2">Periode {data.periode}</p>
-                </div>
-
-                <div className="flex flex-col items-start lg:items-end gap-3">
-                <span className={`text-xs font-semibold px-3 py-1 rounded-full whitespace-nowrap ${STATUS_PILL[data.status].className}`}>
-                    {STATUS_PILL[data.status].label}
-                </span>
-                <button className="flex font-medium text-dark-navy gap-2 bg-primary-gold rounded-lg px-4 py-3 items-center text-sm whitespace-nowrap">
-                    <FaFileDownload size={18} />
-                    Unduh surat tugas
-                </button>
-                </div>
-            </div>
-
-            {/* catatan review - hanya tampil kalau ada review */}
-            {data.reviews.length > 0 && (
-                <div className="bg-red-50 border border-red-200 rounded-xl px-6 py-5 mt-6">
-                <p className="font-semibold text-red-700 mb-2">Catatan Review</p>
-                {data.reviews.map((review) => (
-                    <div key={review.id} className="mb-3 last:mb-0">
-                    <p className="text-red-700 text-sm">{review.pesan}</p>
-                    <p className="text-red-400 text-xs italic mt-1">
-                        Direview oleh: {review.reviewer} - {formatTanggal(review.tgl_buat)}
-                    </p>
+            {!loading && !error && data && (
+                <>
+                    {/* ── Header ── */}
+                    <div className="bg-dark-navy flex flex-col lg:flex-row justify-between rounded-2xl w-full px-5 lg:px-10 py-6 gap-4">
+                        <div>
+                            <h1 className="text-2xl text-white font-semibold">{data.judul}</h1>
+                            <p className="text-light-blue font-medium text-lg mt-2">Ketua: {data.ketua}</p>
+                            <p className="text-light-blue text-sm mt-1">Periode {data.periode}</p>
+                            {data.didanai !== null && (
+                                <span className={`inline-block mt-3 text-xs font-semibold px-3 py-1 rounded-full ${data.didanai ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                                    {data.didanai ? "✓ Didanai LPPM" : "✕ Tidak Didanai LPPM"}
+                                </span>
+                            )}
+                        </div>
+                        <div className="flex flex-col items-start lg:items-end gap-3 min-w-[210px]">
+                            <span className={`text-xs font-semibold px-3 py-1 rounded-full whitespace-nowrap ${STATUS_PILL[data.status].className}`}>
+                                {STATUS_PILL[data.status].label}
+                            </span>
+                            {renderActionWidget()}
+                        </div>
                     </div>
-                ))}
-                </div>
-            )}
 
-            {/* dokumentasi penelitian */}
-            <div className="py-8">
-                <h2 className="font-semibold text-[22px] lg:text-[25px] mb-4">Dokumentasi Penelitian</h2>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {visibleDokumenConfig.map(({ field, label, deskripsi }) => (
-                    <DokumenCard
-                    key={field}
-                    label={label}
-                    deskripsi={deskripsi}
-                    fileName={data[field]}
-                    onUpload={() => (console.log("Upload"))}
-                    />
-                ))}
-                </div>
-            </div>
-            </>
-        )}
+                    {/* ── Catatan revisi Kaprodi ── */}
+                    {status === "revision_kaprodi" && data.kaprodi_rejection_reason && (
+                        <div className="bg-red-50 border border-red-200 rounded-xl px-6 py-5 mt-6">
+                            <p className="font-semibold text-red-700 mb-1">Catatan Revisi Kaprodi</p>
+                            <p className="text-red-700 text-sm">{data.kaprodi_rejection_reason}</p>
+                            {data.kaprodi_revision_file && (
+                                <a href={data.kaprodi_revision_file} target="_blank" rel="noreferrer"
+                                    className="text-red-500 text-xs underline mt-2 inline-flex items-center gap-1">
+                                    <FaPaperclip size={10} /> Unduh file revisi dari Kaprodi
+                                </a>
+                            )}
+                        </div>
+                    )}
+
+                    {/* ── Catatan tidak didanai LPPM ── */}
+                    {data.lppm_rejection_reason && (
+                        <div className="bg-amber-50 border border-amber-200 rounded-xl px-6 py-5 mt-6">
+                            <p className="font-semibold text-amber-700 mb-1">⚠ Tidak Didanai LPPM</p>
+                            <p className="text-amber-700 text-sm">{data.lppm_rejection_reason}</p>
+                            <p className="text-amber-500 text-xs mt-1">Proses tetap berlanjut ke pembuatan surat tugas.</p>
+                        </div>
+                    )}
+
+                    {/* ── Catatan review umum ── */}
+                    {data.reviews.length > 0 && (
+                        <div className="bg-red-50 border border-red-200 rounded-xl px-6 py-5 mt-6">
+                            <p className="font-semibold text-red-700 mb-2">Catatan Review</p>
+                            {data.reviews.map((review) => (
+                                <div key={review.id} className="mb-3 last:mb-0">
+                                    <p className="text-red-700 text-sm">{review.pesan}</p>
+                                    <p className="text-red-400 text-xs italic mt-1">
+                                        Direview oleh: {review.reviewer} — {formatTanggal(review.tgl_buat)}
+                                    </p>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* ── Dokumentasi ── */}
+                    <div className="py-8">
+                        <h2 className="font-semibold text-[22px] lg:text-[25px] mb-4">Dokumentasi Penelitian</h2>
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                            {visibleDocs.map(({ field, label, deskripsi }) => (
+                                <DokumenCard
+                                    key={field}
+                                    label={label}
+                                    deskripsi={deskripsi}
+                                    fileName={data[field]}
+                                    canUpload={canUploadField(field)}
+                                    onUpload={(file) => field === "proposal"
+                                        ? handleUploadProposal(file)
+                                        : handleUploadDokumen(field, file)}
+                                />
+                            ))}
+                        </div>
+                    </div>
+                </>
+            )}
         </DashboardLayout>
     );
 }

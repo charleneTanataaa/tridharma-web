@@ -60,7 +60,7 @@ export default function DataDosen() {
             <StateDisplay type="empty" message="Tidak ditemukan."/>
           )}
           {filteredDosen.map((d) => (
-            <div onClick={() => navigate(`/tri-dharma/data-dosen/${d.id}`)} key={d.id} className="flex items-center justify-between bg-white p-4 rounded shadow border-primary-cream">
+            <div onClick={() => navigate(`/data-dosen/${d.id}`)} key={d.id} className="flex items-center justify-between bg-white p-4 rounded shadow border-primary-cream cursor-pointer hover:bg-gray-50 transition">
               <div>
                 <p className="font-semibold">{d.nama}</p>
                 <p className="text-sm text-gray-500">{d.jurusan}</p>

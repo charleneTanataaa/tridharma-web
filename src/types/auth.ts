@@ -5,6 +5,7 @@ export type Role =
   | "prodi"
   | "tata-usaha"
   | "dosen"
+  | "dosen-tetap"
   | "admin";
 
 export type Jurusan =
@@ -36,7 +37,7 @@ export interface AuthUser {
   id: string;
   nama: string;
   nim: string;
-  jabatan: string | null;
+  jabatan: Role | null;
   jurusan: string | null;
   foto: string | null;
 }
