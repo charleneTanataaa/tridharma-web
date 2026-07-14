@@ -24,11 +24,13 @@ export const menuItems: MenuItem[] = [
         children: [
             { path: "/tri-dharma/pembelajaran", label: "Pembelajaran", icon: "book", allowedRoles: ["dosen"], },
             { path: "/tri-dharma/penelitian", label: "Penelitian", icon: "search", allowedRoles: ["dosen"] },
+            { path: "/tri-dharma/pkm", label: "PKM", icon: "search", allowedRoles: ["dosen"] },
+            { path: "/tri-dharma/penunjang", label: "Penunjang", icon: "search", allowedRoles: ["dosen"] },
             // selain dosen: lewat jurusan dulu
             { label: "Pembelajaran", path: "/tri-dharma/pembelajaran/jurusan", icon: "book", allowedRoles: ["dekan", "kaprodi", "prodi", "tata-usaha"], },
             { label: "Penelitian", path: "/tri-dharma/penelitian/jurusan", icon: "search", allowedRoles: ["dekan", "prodi", "kaprodi", "tata-usaha", "lppm"] },
-            { label: "PKM", path: "/tri-dharma/pkm", icon: "group", allowedRoles: ["dekan", "prodi", "kaprodi", "tata-usaha", "lppm", "dosen"] },
-            { label: "Penunjang", path: "/tri-dharma/penunjang", icon: "inbox", allowedRoles: ["dekan", "prodi", "kaprodi", "tata-usaha", "lppm", "dosen"] },
+            { label: "PKM", path: "/tri-dharma/pkm/jurusan", icon: "group", allowedRoles: ["dekan", "prodi", "kaprodi", "tata-usaha", "lppm"] },
+            { label: "Penunjang", path: "/tri-dharma/penunjang/jurusan", icon: "inbox", allowedRoles: ["dekan", "prodi", "kaprodi", "tata-usaha", "lppm"] },
         ],
     },
     {

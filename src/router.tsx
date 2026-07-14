@@ -8,7 +8,6 @@ import RoleGuard from "./components/guards/RoleGuard";
 import Pembelajaran from "./features/pembelajaran/Pembelajaran";
 import MataKuliahDetail from "./features/pembelajaran/MataKuliahDetail";
 import NotifikasiPage from "./features/dashboard/Notifikasi";
-import Peneliian from "./features/peneliitan/Penelitian";
 import Profile from "./features/profile/Profile";
 import PenelitianDetail from "./features/peneliitan/PenelitianDetail";
 import DataDosen from "./features/dosen/DataDosen";
@@ -18,6 +17,14 @@ import PilihJurusan from "./features/pembelajaran/PilihJurusan";
 import PilihJurusanPenelitian from "./features/peneliitan/PilihJurusanPenelitian";
 import Penelitian from "./features/peneliitan/Penelitian";
 import PenelitianJurusan from "./features/peneliitan/PenelitianJurusan";
+import PKM from "./features/pkm/PKM";
+import PKMDetail from "./features/pkm/PKMDetail";
+import PilihJurusanPKM from "./features/pkm/PilihJurusanPKM";
+import PKMJurusan from "./features/pkm/PKMJurusan";
+import Penunjang from "./features/penunjang/Penunjang";
+import PenunjangDetail from "./features/penunjang/PenunjangDetail";
+import PilihJurusanPenunjang from "./features/penunjang/PilihJurusanPenunjang";
+import PenunjangJurusan from "./features/penunjang/PenunjangJurusan";
 
 export const router = createBrowserRouter([
   // Guest only (logged in users get redirected)
@@ -43,7 +50,10 @@ export const router = createBrowserRouter([
           { path: "/tri-dharma/pembelajaran/matkul/:id", element: <MataKuliahDetail /> },
           { path: "/tri-dharma/penelitian", element: <Penelitian /> },
           { path: "/tri-dharma/penelitian/detail/:id", element: <PenelitianDetail /> },
-          // { path: "/tri-dharma/pkm", element: <PKM/>},
+          { path: "/tri-dharma/pkm", element: <PKM /> },
+          { path: "/tri-dharma/pkm/detail/:id", element: <PKMDetail /> },
+          { path: "/tri-dharma/penunjang", element: <Penunjang /> },
+          { path: "/tri-dharma/penunjang/detail/:id", element: <PenunjangDetail /> },
           // { path: "/tri-dharma/penunjang", element: <Penunjang/>},
         ],
       },
@@ -57,6 +67,14 @@ export const router = createBrowserRouter([
           { path: "/tri-dharma/penelitian/jurusan", element: <PilihJurusanPenelitian /> },
           { path: "/tri-dharma/penelitian/:jurusanId", element: <PenelitianJurusan /> },
           { path: "/tri-dharma/penelitian/:jurusanId/:id", element: <PenelitianDetail /> },
+
+          { path: "/tri-dharma/pkm/jurusan", element: <PilihJurusanPKM /> },
+          { path: "/tri-dharma/pkm/:jurusanId", element: <PKMJurusan /> },
+          { path: "/tri-dharma/pkm/:jurusanId/:id", element: <PKMDetail /> },
+
+          { path: "/tri-dharma/penunjang/jurusan", element: <PilihJurusanPenunjang /> },
+          { path: "/tri-dharma/penunjang/:jurusanId", element: <PenunjangJurusan /> },
+          { path: "/tri-dharma/penunjang/:jurusanId/:id", element: <PenunjangDetail /> },
         ]
       },
       {
@@ -64,7 +82,7 @@ export const router = createBrowserRouter([
         children: [
 
 
-          
+
           // { path: "/tri-dharma/pkm", element: <PKM/>},
           // { path: "/tri-dharma/penunjang", element: <Penunjang/>},
         ],
@@ -77,6 +95,12 @@ export const router = createBrowserRouter([
 
       { path: "/data-dosen/:dosenId/penelitian", element: <Penelitian /> },
       { path: "/data-dosen/:dosenId/penelitian/:id", element: <PenelitianDetail /> },
+
+      { path: "/data-dosen/:dosenId/pkm", element: <PKM /> },
+      { path: "/data-dosen/:dosenId/pkm/:id", element: <PKMDetail /> },
+
+      { path: "/data-dosen/:dosenId/penunjang", element: <Penunjang /> },
+      { path: "/data-dosen/:dosenId/penunjang/:id", element: <PenunjangDetail /> },
       // add role guard
     ],
   },

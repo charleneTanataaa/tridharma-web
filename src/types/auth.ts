@@ -15,7 +15,6 @@ export type Jurusan =
   | "Akuntansi"
   | "Manajemen"
   | "Hospitality"
-  | "All";
 
 export interface User {
   id: string;

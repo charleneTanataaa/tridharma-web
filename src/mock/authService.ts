@@ -1,8 +1,12 @@
 import { LoginResponse, Role, User } from "../types/auth";
 import {
   jurusanData,
+  Kelas,
+  kelasList,
   MataKuliah,
   MataKuliahDetail,
+  MataKuliahKatalog,
+  matkulKatalog,
   matkulList,
   mockMataKuliahDetail,
   mockNotifikasi,
@@ -401,6 +405,86 @@ export async function addMatkulAPI(payload: AddMatkulPayload): Promise<MataKulia
   const newMatkul: MataKuliah = { id: newId, ...payload };
   matkulList.push(newMatkul);
   // Also add to the correct semester bucket in mockPembelajaran
+  const semData = mockPembelajaran[payload.semester_id];
+  if (semData) semData.matakuliah.push(newMatkul);
+  return newMatkul;
+}
+
+/* ================= KATALOG MATKUL (TU) ================= */
+
+export type TambahMatkulKatalogPayload = {
+  kode: string;
+  nama: string;
+  sks: number;
+  jurusan_id: number;
+};
+
+export async function tambahMatkulKatalogAPI(payload: TambahMatkulKatalogPayload): Promise<MataKuliahKatalog> {
+  await delay();
+  const newId = matkulKatalog.length > 0 ? Math.max(...matkulKatalog.map((m) => m.id)) + 1 : 1;
+  const newMatkul: MataKuliahKatalog = { id: newId, ...payload };
+  matkulKatalog.push(newMatkul);
+  return newMatkul;
+}
+
+export async function getMatkulKatalogByJurusan(jurusanId: number): Promise<MataKuliahKatalog[]> {
+  await delay();
+  return matkulKatalog.filter((m) => m.jurusan_id === jurusanId);
+}
+
+/* ================= KELAS (TU) ================= */
+
+export type TambahKelasPayload = {
+  tahun: number;
+  kode: string;
+  nomor: number;
+  jurusan_id: number;
+};
+
+export async function tambahKelasAPI(payload: TambahKelasPayload): Promise<Kelas> {
+  await delay();
+  const newId = kelasList.length > 0 ? Math.max(...kelasList.map((k) => k.id)) + 1 : 1;
+  const newKelas: Kelas = { id: newId, ...payload };
+  kelasList.push(newKelas);
+  return newKelas;
+}
+
+export async function getKelasByJurusan(jurusanId: number): Promise<Kelas[]> {
+  await delay();
+  return kelasList.filter((k) => k.jurusan_id === jurusanId);
+}
+
+/* ================= ASSIGN MATKUL KE DOSEN (TU) ================= */
+
+export type AssignMatkulPayload = {
+  katalog_id: number;  // ID dari MataKuliahKatalog
+  semester_id: string;
+  kelas_id: number;    // ID dari Kelas
+  dosen_id: string;
+  hari: string[];
+  start_time: string;
+  end_time: string;
+};
+
+export async function assignMatkulDosenAPI(payload: AssignMatkulPayload): Promise<MataKuliah> {
+  await delay();
+  const katalog = matkulKatalog.find((m) => m.id === payload.katalog_id);
+  if (!katalog) throw new Error("Mata kuliah katalog tidak ditemukan");
+  const kelas = kelasList.find((k) => k.id === payload.kelas_id);
+  const kelasLabel = kelas ? `${kelas.tahun}${kelas.kode}${kelas.nomor}` : String(payload.kelas_id);
+  const newId = matkulList.length > 0 ? Math.max(...matkulList.map((m) => m.id)) + 1 : 1;
+  const newMatkul: MataKuliah = {
+    id: newId,
+    nama: katalog.nama,
+    kode: katalog.kode,
+    sks: katalog.sks,
+    jurusan_id: katalog.jurusan_id,
+    kelas: kelasLabel,
+    semester_id: payload.semester_id,
+    dosen_id: payload.dosen_id,
+    hari: payload.hari,
+  };
+  matkulList.push(newMatkul);
   const semData = mockPembelajaran[payload.semester_id];
   if (semData) semData.matakuliah.push(newMatkul);
   return newMatkul;

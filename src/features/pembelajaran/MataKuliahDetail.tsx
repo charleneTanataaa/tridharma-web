@@ -41,8 +41,8 @@ export default function MataKuliahDetailPage() {
 
   const breadcrumbItems = jurusanId
     ? [
-      { label: "Pembelajaran", onClick: () => navigate("/tri-dharma/pembelajaran/jurusan"), },
-      { label: "Jurusan", onClick: () => navigate(`/tri-dharma/pembelajaran/`), },
+      { label: "Pembelajaran", },
+      { label: "Jurusan", onClick: () => navigate(`/tri-dharma/pembelajaran/jurusan`), },
       { label: "Mata Kuliah", onClick: () => navigate(`/tri-dharma/pembelajaran/${jurusanId}`), },
       { label: data.nama, isActive: true },
     ] : dosenId

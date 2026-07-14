@@ -6,7 +6,7 @@ import { FaArrowLeft, FaSchool, FaFlask, FaUsers, FaStar, FaUser, FaCertificate,
 import { getDosenDetailAPI, addMatkulAPI, AddMatkulPayload } from '../../mock/authService';
 import { StateDisplay } from '../../components/ui/StateDisplay';
 import { User } from '../../types/auth';
-import { jurusanData, semesters } from '../../mock/db';
+import { jurusanData, matkulKatalog, MataKuliahKatalog, semesters } from '../../mock/db';
 import { useAuthStore } from '../../stores/auth.store';
 
 const HARI_OPTIONS = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
@@ -27,6 +27,9 @@ function InputMatkulModal({ dosen, onClose, onSuccess }: { dosen: User; onClose:
         link_unggah: "",
     });
     const [submitting, setSubmitting] = useState(false);
+    // Katalog filtered by selected jurusan
+    const filteredKatalog: MataKuliahKatalog[] = matkulKatalog.filter(m => m.jurusan_id === form.jurusan_id);
+    const [selectedKatalogId, setSelectedKatalogId] = useState<string>("");
 
     const toggleHari = (h: string) => {
         setForm(prev => ({
@@ -37,7 +40,7 @@ function InputMatkulModal({ dosen, onClose, onSuccess }: { dosen: User; onClose:
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!form.nama.trim() || !form.kode.trim()) { toast.error("Nama dan kode mata kuliah wajib diisi"); return; }
+        if (!form.nama.trim() || !form.kode.trim()) { toast.error("Pilih mata kuliah terlebih dahulu"); return; }
         if (form.hari.length === 0) { toast.error("Pilih minimal 1 hari"); return; }
         setSubmitting(true);
         try {
@@ -49,8 +52,8 @@ function InputMatkulModal({ dosen, onClose, onSuccess }: { dosen: User; onClose:
         finally { setSubmitting(false); }
     };
 
-    const calculateEndTime = (start: string, sks: number) =>{
-        if(!start) return "";
+    const calculateEndTime = (start: string, sks: number) => {
+        if (!start) return "";
         const [hours, minutes] = start.split(":").map(Number);
         const date = new Date();
         date.setHours(hours, minutes, 0, 0);
@@ -88,29 +91,32 @@ function InputMatkulModal({ dosen, onClose, onSuccess }: { dosen: User; onClose:
                         </select>
                     </div>
 
-                    {/* Jurusan */}
+                    {/* Mata Kuliah — pilih dari katalog yang sudah ada */}
                     <div>
                         <label className="text-xs font-semibold text-gray-500 uppercase">Jurusan</label>
-                        <select value={form.jurusan_id} onChange={e => setForm(p => ({ ...p, jurusan_id: Number(e.target.value) }))}
+                        <select value={form.jurusan_id} onChange={e => {
+                            setForm(p => ({ ...p, jurusan_id: Number(e.target.value), nama: "", kode: "", sks: 3 }));
+                            setSelectedKatalogId("");
+                        }}
                             className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-gold">
                             {jurusanData.map(j => <option key={j.id} value={j.id}>{j.nama}</option>)}
                         </select>
                     </div>
 
-                    {/* Nama Matkul */}
                     <div>
-                        <label className="text-xs font-semibold text-gray-500 uppercase">Nama Mata Kuliah</label>
-                        <input value={form.nama} onChange={e => setForm(p => ({ ...p, nama: e.target.value }))}
-                            placeholder="e.g. Pemrograman Web"
-                            className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-gold" />
-                    </div>
-
-                    {/* Kode Matkul */}
-                    <div>
-                        <label className="text-xs font-semibold text-gray-500 uppercase">Kode Mata Kuliah</label>
-                        <input value={form.kode} onChange={e => setForm(p => ({ ...p, kode: e.target.value }))}
-                            placeholder="e.g. IF2210"
-                            className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-gold" />
+                        <label className="text-xs font-semibold text-gray-500 uppercase">Mata Kuliah</label>
+                        <select value={selectedKatalogId} onChange={e => {
+                            const id = e.target.value;
+                            setSelectedKatalogId(id);
+                            const mk = filteredKatalog.find(m => m.id === Number(id));
+                            if (mk) setForm(p => ({ ...p, nama: mk.nama, kode: mk.kode, sks: mk.sks }));
+                        }}
+                            className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-gold" required>
+                            <option value="">— Pilih Mata Kuliah —</option>
+                            {filteredKatalog.map(m => (
+                                <option key={m.id} value={m.id}>{m.kode} — {m.nama} ({m.sks} SKS)</option>
+                            ))}
+                        </select>
                     </div>
 
                     {/* Kelas */}
@@ -154,7 +160,7 @@ function InputMatkulModal({ dosen, onClose, onSuccess }: { dosen: User; onClose:
                             </div>
                             <div>-</div>
                             <div className='flex gap-2 items-center justify-center'>
-                                 <input type="time" className=' bg-gray-100 rounded px-2 py-1' disabled  value={form.end_time}/>
+                                <input type="time" className=' bg-gray-100 rounded px-2 py-1' disabled value={form.end_time} />
                             </div>
                         </div>
                     </div>
@@ -294,18 +300,16 @@ export default function DetailDosen() {
                     <div className="space-y-2">
                         {[
                             { icon: FaFlask, label: "Penelitian", onClick: () => navigate(`/data-dosen/${data.id}/penelitian`) },
-                            { icon: FaUsers, label: "PKM", onClick: () => toast.info("Fitur PKM akan segera hadir"), disabled: true },
-                            { icon: FaStar, label: "Penunjang", onClick: () => toast.info("Fitur Penunjang akan segera hadir"), disabled: true },
-                        ].map(({ icon: Icon, label, onClick, disabled }) => (
-                            <div key={label} onClick={!disabled ? onClick : undefined}
-                                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition ${disabled
-                                    ? 'bg-gray-50 opacity-50 cursor-not-allowed'
-                                    : 'bg-[#F1EFE6] hover:bg-[#E8E5D8] cursor-pointer'}`}>
+                            { icon: FaUsers, label: "PKM", onClick: () => navigate(`/data-dosen/${data.id}/pkm`) },
+                            { icon: FaStar, label: "Penunjang", onClick: () => navigate(`/data-dosen/${data.id}/penunjang`) },
+                        ].map(({ icon: Icon, label, onClick }) => (
+                            <div key={label} onClick={onClick}
+                                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition bg-[#F1EFE6] hover:bg-[#E8E5D8] cursor-pointer `}>
                                 <Icon className="text-dark-navy shrink-0" />
                                 <span className="flex-1 font-semibold text-gray-800 text-sm">{label}</span>
-                                {!disabled && <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                </svg>}
+                                </svg>
                             </div>
                         ))}
                     </div>

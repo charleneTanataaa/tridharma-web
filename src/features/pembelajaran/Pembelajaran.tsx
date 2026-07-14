@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import DashboardLayout from "../../layouts/DashboardLayout"
@@ -31,6 +31,8 @@ export default function Pembelajaran() {
     const [showRejectInput, setShowRejectInput] = useState(false);
     const [isActing, setIsActing] = useState(false);
     const [search, setSearch] = useState("");
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const { data, loading, error, setData } = useFetchData({
         fetchFn: () => dosenId
@@ -44,14 +46,22 @@ export default function Pembelajaran() {
 
     const status = data?.surat_tugas_status ?? "none";
 
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) setSelectedFile(file);
+    };
+
     const handleUpload = async () => {
-        // Simulated file name — in production this would come from a real file picker
-        const fileName = `surat-tugas-${selectedSemesterId}.pdf`;
+        if (!selectedFile) {
+            fileInputRef.current?.click();
+            return;
+        }
         setIsActing(true);
         try {
-            await uploadSuratTugasAPI(selectedSemesterId, fileName);
-            setData((prev) => prev ? { ...prev, surat_tugas: fileName, surat_tugas_status: "pending_dekan" } : prev);
+            await uploadSuratTugasAPI(selectedSemesterId, selectedFile.name);
+            setData((prev) => prev ? { ...prev, surat_tugas: selectedFile.name, surat_tugas_status: "pending_dekan" } : prev);
             toast.success("Surat tugas berhasil diupload");
+            setSelectedFile(null);
         } catch { toast.error("Gagal mengupload surat tugas"); }
         finally { setIsActing(false); }
     };
@@ -82,7 +92,7 @@ export default function Pembelajaran() {
         finally { setIsActing(false); }
     };
 
-    // Surat Tugas widget — different per role × status
+    // Surat Tugas widget — different per role & status
     const renderSuratTugas = () => {
         if (status === "approved" && data?.surat_tugas) {
             return (
@@ -99,15 +109,22 @@ export default function Pembelajaran() {
                     {status === "rejected" && (
                         <p className="text-red-400 text-xs">Ditolak: {data?.surat_tugas_rejection_reason}</p>
                     )}
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept=".pdf"
+                        className="hidden"
+                        onChange={handleFileChange}
+                    />
                     <button onClick={handleUpload} disabled={isActing}
                         className="flex font-medium text-dark-navy gap-2 bg-primary-gold w-full rounded-lg px-4 py-3 items-center justify-center disabled:opacity-60">
-                        <FaUpload size={16} /> {status === "rejected" ? "Upload Ulang Surat Tugas" : "Upload Surat Tugas"}
+                        <FaUpload size={16} /> {selectedFile ? `Upload: ${selectedFile.name}` : (status === "rejected" ? "Upload Ulang Surat Tugas" : "Upload Surat Tugas")}
                     </button>
                 </div>
             );
             return (
                 <div className="text-light-blue text-sm text-center px-3 py-3 border border-light-blue rounded-lg w-full">
-                    {status === "pending_dekan" ? "⏳ Menunggu persetujuan Dekan" : "⏳ Menunggu persetujuan Kaprodi"}
+                    {status === "pending_dekan" ? "Menunggu persetujuan Dekan" : "Menunggu persetujuan Kaprodi"}
                 </div>
             );
         }
@@ -156,9 +173,9 @@ export default function Pembelajaran() {
         return (
             <div className="text-muted-text text-sm text-center px-3 py-3 border border-muted-text rounded-lg w-full">
                 {status === "none" ? "Belum ada surat tugas" :
-                    status === "pending_dekan" ? "⏳ Menunggu persetujuan Dekan" :
-                        status === "pending_kaprodi" ? "⏳ Menunggu persetujuan Kaprodi" :
-                            status === "rejected" ? "❌ Surat tugas ditolak" :
+                    status === "pending_dekan" ? "Menunggu persetujuan Dekan" :
+                        status === "pending_kaprodi" ? "Menunggu persetujuan Kaprodi" :
+                            status === "rejected" ? "Surat tugas ditolak" :
                                 "Belum ada surat tugas"}
             </div>
         );

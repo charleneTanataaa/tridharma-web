@@ -22,7 +22,9 @@ export const mockUsers: User[] = [
   { id: "4", nim: "dosen@uph.edu", nama: "Dosen", jabatan: "dosen", jurusan: "Informatika", foto: null, thn_masuk: 2021, jenjang_akademik: "", no_sertifikat: "", nidn: "", no_telepon: "", tgl_lahir: "" },
   { id: "5", nim: "prodi@uph.edu", nama: "Prodi", jabatan: "prodi", jurusan: "Informatika", foto: null, thn_masuk: 2021, jenjang_akademik: "", no_sertifikat: "", nidn: "", no_telepon: "", tgl_lahir: "" },
   { id: "6", nim: "dekan@uph.edu", nama: "Dekan", jabatan: "dekan", jurusan: "Manajemen", foto: null, thn_masuk: 2016, jenjang_akademik: "S3", no_sertifikat: "", nidn: "", no_telepon: "", tgl_lahir: "" },
-
+  { id: "7", nim: "lala@uph.edu", nama: "Lala", jabatan: "dosen", jurusan: "Manajemen", foto: null, thn_masuk: 2021, jenjang_akademik: "S2", no_sertifikat: "SER003", nidn: "1234567890", no_telepon: "081234567890", tgl_lahir: "1988-11-03" },
+  { id: "8", nim: "bebe@uph.edu", nama: "Bebe", jabatan: "dosen", jurusan: "Hukum", foto: null, thn_masuk: 2014, jenjang_akademik: "S2", no_sertifikat: "SER001", nidn: "1234567890", no_telepon: "081234567890", tgl_lahir: "1988-11-03" },
+  { id: "9", nim: "john@uph.edu", nama: "John", jabatan: "dosen", jurusan: "Akuntansi", foto: null, thn_masuk: 2023, jenjang_akademik: "S3", no_sertifikat: "SER003", nidn: "1234567890", no_telepon: "081234567890", tgl_lahir: "1988-11-03" },
 ];
 
 // ─────────────────────────────────────────────
@@ -61,6 +63,47 @@ export const semesters: Semester[] = [
   { id: "s1", label: "Semester Ganjil 2025/2026", active: true },
   { id: "s2", label: "Semester Genap 2024/2025", active: false },
   { id: "s3", label: "Semester Ganjil 2024/2025", active: false },
+];
+
+// ─────────────────────────────────────────────
+// KELAS
+// ─────────────────────────────────────────────
+
+export type Kelas = {
+  id: number;
+  tahun: number;      // e.g. 23
+  kode: string;       // e.g. TI
+  nomor: number;      // e.g. 1, 2, 3
+  jurusan_id: number;
+};
+
+export const kelasList: Kelas[] = [
+  { id: 1, tahun: 23, kode: "TI", nomor: 1, jurusan_id: 1 },
+  { id: 2, tahun: 23, kode: "TI", nomor: 2, jurusan_id: 1 },
+  { id: 3, tahun: 23, kode: "SI", nomor: 1, jurusan_id: 2 },
+  { id: 4, tahun: 22, kode: "AK", nomor: 1, jurusan_id: 4 },
+];
+
+// ─────────────────────────────────────────────
+// MATA KULIAH KATALOG (master list)
+// ─────────────────────────────────────────────
+
+export type MataKuliahKatalog = {
+  id: number;
+  kode: string;
+  nama: string;
+  sks: number;
+  jurusan_id: number;
+};
+
+export const matkulKatalog: MataKuliahKatalog[] = [
+  { id: 1, kode: "IF2204", nama: "Matematika Diskrit", sks: 3, jurusan_id: 1 },
+  { id: 2, kode: "IF2301", nama: "Business Intelligence", sks: 3, jurusan_id: 1 },
+  { id: 3, kode: "IF2210", nama: "Pemrograman Web", sks: 3, jurusan_id: 1 },
+  { id: 4, kode: "IF2205", nama: "Struktur Data", sks: 3, jurusan_id: 1 },
+  { id: 5, kode: "SI2101", nama: "Basis Data", sks: 3, jurusan_id: 2 },
+  { id: 6, kode: "SI2205", nama: "Analisis Sistem Informasi", sks: 3, jurusan_id: 2 },
+  { id: 7, kode: "AK1101", nama: "Akuntansi Keuangan", sks: 3, jurusan_id: 4 },
 ];
 
 // ─────────────────────────────────────────────
@@ -210,7 +253,7 @@ export const mockSiaran: Siaran[] = [
 // ─────────────────────────────────────────────
 
 export type StatusPenelitian =
-  | "accepted" | "rejected" | "pending"           
+  | "accepted" | "rejected" | "pending"
   | "none"                                        // belum ada proposal
   | "pending_kaprodi"                             // proposal diupload, menunggu kaprodi
   | "revision_kaprodi"                            // kaprodi tolak, dosen perlu revisi
