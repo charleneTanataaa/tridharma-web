@@ -1,9 +1,11 @@
-import DashboardLayout from "../../layouts/DashboardLayout"
+import JurusanPicker from "../../components/ui/JurusanPicker"
 
 export default function PilihJurusanPKM() {
     return (
-        <DashboardLayout>
-            <div>Pilh Jurusan</div>
-        </DashboardLayout>
+        <JurusanPicker
+            basePath="tri-dharma/pkm"
+            title="PKM"
+            description="Pilih Jurusan untuk melihat PKM"
+            breadcrumbLabel="PKM" />
     )
 }

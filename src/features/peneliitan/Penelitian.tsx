@@ -120,7 +120,15 @@ export default function Penelitian() {
     <DashboardLayout>
       {showModal && <UploadProposalModal onClose={() => setShowModal(false)} />}
       {/* bagian atas - nav links */}
-      <Breadcrumb items={[{ label: "Penelitian", isActive: true }, { label: "Semester" }]} />
+      <Breadcrumb items={dosenId
+        ? [
+          { label: "Data Dosen", onClick: () => navigate(`/data-dosen/${dosenId}`) },
+          { label: "Penelitian", isActive: true }
+        ]
+        : [
+          { label: "Penelitian" },
+          { label: "Semester", isActive: true }
+        ]} />
 
       {/* header - section name, description, semester selection, upload proposal */}
       <div className="bg-dark-navy flex flex-col lg:flex-row justify-between rounded-2xl w-full px-5 lg:px-10 py-6">
