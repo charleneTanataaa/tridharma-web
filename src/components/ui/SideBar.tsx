@@ -65,7 +65,8 @@ function SidebarNav({ user, pathname, onNavigate }: {
                                 <button type="button" className="" onClick={() => toggleSection(item.path)}><MdKeyboardArrowDown size={20} className={`transition-transform text-white duration-200 ${isOpen ? "rotate-180" : "rotate-0"}`} /></button>
                             </div>
                             {isOpen && visibleChildren.map((child) => {
-                                const isActive = pathname === child.path || pathname.startsWith(`${child.path}/`);
+                                const basePath = child.path.replace(/\/jurusan$/, "");
+                                const isActive = pathname === child.path || pathname.startsWith(`${basePath}/`);
 
                                 return (
                                     <Link key={child.path} to={child.path} onClick={onNavigate}

@@ -6,10 +6,10 @@ type Props = {
     allowedRoles: Role[];
 };
 
-export default function RoleGuard({ allowedRoles }: Props){
+export default function RoleGuard({ allowedRoles }: Props) {
     const user = useAuthStore((state) => state.user);
-    if(!user) return <Navigate to="/login" replace />
-    if(!allowedRoles.includes(user.jabatan)) return <Navigate to="/dashboard" replace/>
+    if (!user) return <Navigate to="/login" replace />
+    if (!allowedRoles.includes(user.jabatan as Role)) return <Navigate to="/dashboard" replace />
 
-    return <Outlet/>;
+    return <Outlet />;
 }
