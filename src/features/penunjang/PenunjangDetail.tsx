@@ -1,9 +1,5 @@
-import DashboardLayout from "../../layouts/DashboardLayout";
+import DharmaDetailFeature from "../tridharma/DharmaDetailFeature";
 
 export default function PenunjangDetail() {
-    return (
-        <DashboardLayout>
-            <div>Penunjang Detail</div>
-        </DashboardLayout>
-    )
+  return <DharmaDetailFeature type="penunjang" />;
 }

@@ -63,7 +63,11 @@ export const router = createBrowserRouter([
           { path: "/tri-dharma/pembelajaran/jurusan", element: <PilihJurusan /> },
           { path: "/tri-dharma/pembelajaran/:jurusanId", element: <PembelajaranJurusan /> },
           { path: "/tri-dharma/pembelajaran/:jurusanId/:id", element: <MataKuliahDetail /> },
-
+        ]
+      },
+      {
+        element: <RoleGuard allowedRoles={["dekan", "kaprodi", "prodi", "tata-usaha", "lppm"]} />,
+        children: [
           { path: "/tri-dharma/penelitian/jurusan", element: <PilihJurusanPenelitian /> },
           { path: "/tri-dharma/penelitian/:jurusanId", element: <PenelitianJurusan /> },
           { path: "/tri-dharma/penelitian/:jurusanId/:id", element: <PenelitianDetail /> },

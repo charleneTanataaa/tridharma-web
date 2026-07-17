@@ -12,6 +12,9 @@ import {
   mockNotifikasi,
   mockPembelajaran,
   mockPenelitianDetail,
+  mockPKMDetail,
+  mockPenunjangDetail,
+  DharmaType,
   mockSiaran,
   mockUsers,
   Notifikasi,
@@ -168,11 +171,14 @@ export async function uploadSuratTugasAPI(semesterId: string, fileName: string):
 }
 
 // Dekan → pending_kaprodi, Kaprodi → approved
-export async function approveSuratTugasAPI(semesterId: string, role: "dekan" | "kaprodi"): Promise<void> {
+export async function approveSuratTugasAPI(semesterId: string, role: "dekan" | "kaprodi", fileName?: string): Promise<void> {
   await delay();
   const sem = mockPembelajaran[semesterId];
   if (!sem) throw new Error("Semester tidak ditemukan");
   sem.surat_tugas_status = role === "dekan" ? "pending_kaprodi" : "approved";
+  if (fileName) {
+    sem.surat_tugas = fileName;
+  }
 }
 
 // Dekan or Kaprodi rejects — status goes back to rejected, TU must re-upload
@@ -230,48 +236,70 @@ export async function addReviewAPI(
 
 /* ================= PENELITIAN ================= */
 
-// Helper: konversi PenelitianDetail ke Penelitian (list item)
-function toListItem(p: PenelitianDetail) {
+/* ================= TRI DHARMA (PENELITIAN, PKM, PENUNJANG) ================= */
+
+export function getDharmaCollection(type: DharmaType): Record<string, PenelitianDetail> {
+  if (type === "pkm") return mockPKMDetail;
+  if (type === "penunjang") return mockPenunjangDetail;
+  return mockPenelitianDetail;
+}
+
+export type DharmaListItem = {
+  id: number;
+  judul: string;
+  kode: string;
+  sks: number;
+  status: string;
+  jurusan_id: number;
+  dosen_id: string;
+};
+
+function toListItem(p: PenelitianDetail): DharmaListItem {
   return { id: p.id, judul: p.judul, kode: p.kode, sks: p.sks, status: p.status, jurusan_id: p.jurusan_id, dosen_id: p.dosen_id };
 }
 
-// GET semua penelitian pada semester (admin/kaprodi/TU view)
-export async function getPenelitian(idSem: string): Promise<PenelitianListResponse> {
+// GET all dharma on semester
+export async function getDharmaList(type: DharmaType, idSem: string): Promise<{ items: DharmaListItem[] }> {
   await delay();
-  const penelitian = Object.values(mockPenelitianDetail)
+  const collection = getDharmaCollection(type);
+  const items = Object.values(collection)
     .filter((p) => p.semester_id === idSem)
     .map(toListItem);
-  return { penelitian };
+  return { items };
 }
 
-// GET penelitian milik dosen sendiri (atau dosen tertentu dari data-dosen view)
-export async function getMyPenelitian(idSem: string, dosenId: string, search: string = ""): Promise<PenelitianListResponse> {
+// GET my dharma (lecturer view)
+export async function getMyDharmaList(type: DharmaType, idSem: string, dosenId: string, search: string = ""): Promise<{ items: DharmaListItem[] }> {
   await delay();
-  const penelitian = Object.values(mockPenelitianDetail)
+  const collection = getDharmaCollection(type);
+  const items = Object.values(collection)
     .filter((p) => p.semester_id === idSem && p.dosen_id === dosenId)
     .filter((p) => p.judul.toLowerCase().includes(search.toLowerCase()))
     .map(toListItem);
-  return { penelitian };
+  return { items };
 }
 
-// GET penelitian per jurusan (admin jurusan view)
-export async function getPenelitianByJurusan(jurusanId: number, idSem: string, search: string = ""): Promise<PenelitianListResponse> {
+// GET dharma by department
+export async function getDharmaByJurusan(type: DharmaType, jurusanId: number, idSem: string, search: string = ""): Promise<{ items: DharmaListItem[] }> {
   await delay();
-  const penelitian = Object.values(mockPenelitianDetail)
+  const collection = getDharmaCollection(type);
+  const items = Object.values(collection)
     .filter((p) => p.semester_id === idSem && p.jurusan_id === jurusanId)
     .filter((p) => p.judul.toLowerCase().includes(search.toLowerCase()))
     .map(toListItem);
-  return { penelitian };
+  return { items };
 }
 
-export async function getPenelitianDetail(penelitianId: string): Promise<PenelitianDetail> {
+export async function getDharmaDetail(type: DharmaType, id: string): Promise<PenelitianDetail> {
   await delay();
-  const penelitian = mockPenelitianDetail[penelitianId];
-  if(!penelitian) throw new Error("Penelitian tidak ditemukan");
-  return penelitian;
+  const collection = getDharmaCollection(type);
+  const item = collection[id];
+  if (!item) throw new Error(`${type} tidak ditemukan`);
+  return item;
 }
 
-export async function uploadPenelitianAPI(
+export async function uploadDharmaDocumentAPI(
+  type: DharmaType,
   id: string,
   field: keyof Pick<
     PenelitianDetail,
@@ -280,85 +308,93 @@ export async function uploadPenelitianAPI(
   fileName: string
 ) {
   await delay();
-
-  mockPenelitianDetail[id][field] = fileName;
+  const collection = getDharmaCollection(type);
+  const item = collection[id];
+  if (!item) throw new Error("Data tidak ditemukan");
+  item[field] = fileName;
 }
 
-export async function addReviewPenelitianAPI(
+export async function addReviewDharmaAPI(
+  type: DharmaType,
   id: string,
   pesan: string,
   reviewer: string
 ): Promise<ReviewAdministrasi> {
   await delay();
-
+  const collection = getDharmaCollection(type);
+  const item = collection[id];
+  if (!item) throw new Error("Data tidak ditemukan");
+  
   const review = {
     id: Date.now().toString(),
     reviewer,
     pesan,
     tgl_buat: new Date().toISOString(),
   };
-
-  mockPenelitianDetail[id].reviews.push(review);
-
+  item.reviews.push(review);
   return review;
 }
 
-// Dosen upload proposal → status: pending_kaprodi
-export async function uploadProposalPenelitianAPI(id: string, fileName: string): Promise<void> {
+export async function uploadProposalDharmaAPI(type: DharmaType, id: string, fileName: string): Promise<void> {
   await delay();
-  const penelitian = mockPenelitianDetail[id];
-  if (!penelitian) throw new Error("Penelitian tidak ditemukan");
-  penelitian.proposal = fileName;
-  penelitian.status = "pending_kaprodi";
+  const collection = getDharmaCollection(type);
+  const item = collection[id];
+  if (!item) throw new Error("Data tidak ditemukan");
+  item.proposal = fileName;
+  item.status = "pending_kaprodi";
 }
 
-// Kaprodi setujui proposal → status: pending_lppm
-export async function approveKaprodiPenelitianAPI(id: string): Promise<void> {
+export async function approveKaprodiDharmaAPI(type: DharmaType, id: string, fileName?: string): Promise<void> {
   await delay();
-  const penelitian = mockPenelitianDetail[id];
-  if (!penelitian) throw new Error("Penelitian tidak ditemukan");
-  penelitian.status = "pending_lppm";
-  penelitian.kaprodi_rejection_reason = undefined;
-  penelitian.kaprodi_revision_file = undefined;
+  const collection = getDharmaCollection(type);
+  const item = collection[id];
+  if (!item) throw new Error("Data tidak ditemukan");
+  item.status = type === "penunjang" ? "pending_surat_tugas" : "pending_lppm";
+  item.kaprodi_rejection_reason = undefined;
+  item.kaprodi_revision_file = undefined;
+  if (fileName) {
+    item.proposal = fileName;
+  }
 }
 
-// Kaprodi tolak proposal → status: revision_kaprodi
-export async function rejectKaprodiPenelitianAPI(id: string, reason: string, revisionFile?: string): Promise<void> {
+export async function rejectKaprodiDharmaAPI(type: DharmaType, id: string, reason: string, revisionFile?: string): Promise<void> {
   await delay();
-  const penelitian = mockPenelitianDetail[id];
-  if (!penelitian) throw new Error("Penelitian tidak ditemukan");
-  penelitian.status = "revision_kaprodi";
-  penelitian.kaprodi_rejection_reason = reason;
-  penelitian.kaprodi_revision_file = revisionFile ?? null;
+  const collection = getDharmaCollection(type);
+  const item = collection[id];
+  if (!item) throw new Error("Data tidak ditemukan");
+  item.status = "revision_kaprodi";
+  item.kaprodi_rejection_reason = reason;
+  item.kaprodi_revision_file = revisionFile ?? null;
 }
 
-// LPPM setujui → status: pending_surat_tugas, didanai: true
-export async function approveLPPMAPI(id: string): Promise<void> {
+export async function approveLPPMDharmaAPI(type: DharmaType, id: string): Promise<void> {
   await delay();
-  const penelitian = mockPenelitianDetail[id];
-  if (!penelitian) throw new Error("Penelitian tidak ditemukan");
-  penelitian.status = "pending_surat_tugas";
-  penelitian.didanai = true;
+  const collection = getDharmaCollection(type);
+  const item = collection[id];
+  if (!item) throw new Error("Data tidak ditemukan");
+  item.status = "pending_surat_tugas";
+  item.didanai = true;
 }
 
-// LPPM tolak → status: pending_surat_tugas, didanai: false (proses tetap lanjut)
-export async function rejectLPPMAPI(id: string, reason: string): Promise<void> {
+export async function rejectLPPMDharmaAPI(type: DharmaType, id: string, reason: string): Promise<void> {
   await delay();
-  const penelitian = mockPenelitianDetail[id];
-  if (!penelitian) throw new Error("Penelitian tidak ditemukan");
-  penelitian.status = "pending_surat_tugas";
-  penelitian.didanai = false;
-  penelitian.lppm_rejection_reason = reason;
+  const collection = getDharmaCollection(type);
+  const item = collection[id];
+  if (!item) throw new Error("Data tidak ditemukan");
+  item.status = "pending_surat_tugas";
+  item.didanai = false;
+  item.lppm_rejection_reason = reason;
 }
 
-// TU upload surat tugas → status: ongoing
-export async function uploadSuratTugasPenelitianAPI(id: string, fileName: string): Promise<void> {
+export async function uploadSuratTugasDharmaAPI(type: DharmaType, id: string, fileName: string): Promise<void> {
   await delay();
-  const penelitian = mockPenelitianDetail[id];
-  if (!penelitian) throw new Error("Penelitian tidak ditemukan");
-  penelitian.surat_tugas = fileName;
-  penelitian.status = "ongoing";
+  const collection = getDharmaCollection(type);
+  const item = collection[id];
+  if (!item) throw new Error("Data tidak ditemukan");
+  item.surat_tugas = fileName;
+  item.status = "ongoing";
 }
+
 
 
 /* ================= DOSEN ================= */

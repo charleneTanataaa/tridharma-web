@@ -396,3 +396,52 @@ export const mockPenelitianDetail: Record<string, PenelitianDetail> = {
   },
 };
 
+export type DharmaType = "penelitian" | "pkm" | "penunjang";
+
+export const mockPKMDetail: Record<string, PenelitianDetail> = {
+  // Dosen Mangasa (dosen_id: "1") - Semester Ganjil 2025/2026 (s1)
+  "11": {
+    id: 11, judul: "PKM Sosialisasi Pemrograman untuk Anak SD",
+    kode: "IF2204", ketua: "Mangasa, M.T.", periode: "2026 - 2027",
+    status: "ongoing", dosen_id: "1", semester_id: "s1", jurusan_id: 1, sks: 3,
+    proposal: "Proposal_PKM_SD.pdf",
+    laporan_akhir: null, loa: null, hasil_review_sederajat: null,
+    didanai: true, surat_tugas: "ST_PKM_Mangasa_s1.pdf",
+    reviews: [],
+  },
+  // Dosen (dosen_id: "4") - Semester Ganjil 2025/2026 (s1)
+  "12": {
+    id: 12, judul: "Pemberdayaan UMKM melalui Digital Marketing",
+    kode: "IF2301", ketua: "Dosen, S.Kom.", periode: "2026 - 2027",
+    status: "pending_kaprodi", dosen_id: "4", semester_id: "s1", jurusan_id: 1, sks: 3,
+    proposal: "Proposal_PKM_UMKM.pdf",
+    laporan_akhir: null, loa: null, hasil_review_sederajat: null,
+    didanai: null, surat_tugas: null,
+    reviews: [],
+  }
+};
+
+export const mockPenunjangDetail: Record<string, PenelitianDetail> = {
+  // Dosen Mangasa (dosen_id: "1") - Semester Ganjil 2025/2026 (s1)
+  "21": {
+    id: 21, judul: "Seminar Nasional Teknologi Informasi",
+    kode: "IF2204", ketua: "Mangasa, M.T.", periode: "2026 - 2027",
+    status: "ongoing", dosen_id: "1", semester_id: "s1", jurusan_id: 1, sks: 3,
+    proposal: "Flyer_Seminar_IT.pdf",
+    laporan_akhir: null, loa: null, hasil_review_sederajat: null,
+    didanai: null, surat_tugas: "ST_Seminar_Mangasa.pdf",
+    reviews: [],
+  },
+  // Dosen (dosen_id: "4") - Semester Ganjil 2025/2026 (s1)
+  "22": {
+    id: 22, judul: "Workshop Pengajaran Hybrid",
+    kode: "IF2301", ketua: "Dosen, S.Kom.", periode: "2026 - 2027",
+    status: "accepted", dosen_id: "4", semester_id: "s1", jurusan_id: 1, sks: 3,
+    proposal: "Flyer_Workshop_Hybrid.pdf",
+    laporan_akhir: "Sertifikat_Workshop_Hybrid.pdf", loa: null, hasil_review_sederajat: null,
+    didanai: null, surat_tugas: "ST_Workshop_Hybrid.pdf",
+    reviews: [],
+  }
+};
+
+

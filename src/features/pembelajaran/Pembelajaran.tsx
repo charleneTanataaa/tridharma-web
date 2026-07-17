@@ -29,6 +29,9 @@ export default function Pembelajaran() {
     const [selectedSemesterId, setSelectedSemesterId] = useState(activeSemester?.id ?? semesters[0].id);
     const [rejectReason, setRejectReason] = useState("");
     const [showRejectInput, setShowRejectInput] = useState(false);
+    const [showApproveInput, setShowApproveInput] = useState(false);
+    const [signedFile, setSignedFile] = useState<File | null>(null);
+    const fileSignedInputRef = useRef<HTMLInputElement>(null);
     const [isActing, setIsActing] = useState(false);
     const [search, setSearch] = useState("");
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -68,12 +71,18 @@ export default function Pembelajaran() {
 
     const handleApprove = async () => {
         if (!isDekan && !isKaprodi) return;
+        if (!signedFile) {
+            toast.error("Silakan pilih dokumen bertanda tangan");
+            return;
+        }
         const role = isDekan ? "dekan" : "kaprodi";
         const nextStatus = isDekan ? "pending_kaprodi" : "approved";
         setIsActing(true);
         try {
-            await approveSuratTugasAPI(selectedSemesterId, role);
-            setData((prev) => prev ? { ...prev, surat_tugas_status: nextStatus as any } : prev);
+            await approveSuratTugasAPI(selectedSemesterId, role, signedFile.name);
+            setData((prev) => prev ? { ...prev, surat_tugas: signedFile.name, surat_tugas_status: nextStatus as any } : prev);
+            setShowApproveInput(false);
+            setSignedFile(null);
             toast.success("Surat tugas disetujui");
         } catch { toast.error("Gagal menyetujui"); }
         finally { setIsActing(false); }
@@ -132,18 +141,19 @@ export default function Pembelajaran() {
         if ((isDekan && status === "pending_dekan") || (isKaprodi && status === "pending_kaprodi")) {
             return (
                 <div className="flex flex-col gap-2 w-full">
-                    {!showRejectInput ? (
+                    {!showRejectInput && !showApproveInput && (
                         <div className="flex gap-2">
-                            <button onClick={handleApprove} disabled={isActing}
-                                className="flex-1 bg-green-500 hover:bg-green-600 text-white font-medium rounded-lg px-3 py-2 text-sm disabled:opacity-60">
+                            <button onClick={() => { setShowApproveInput(true); setShowRejectInput(false); }}
+                                className="flex-1 bg-green-500 hover:bg-green-600 text-white font-medium rounded-lg px-3 py-2 text-sm">
                                 ✓ Setujui
                             </button>
-                            <button onClick={() => setShowRejectInput(true)}
+                            <button onClick={() => { setShowRejectInput(true); setShowApproveInput(false); }}
                                 className="flex-1 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg px-3 py-2 text-sm">
                                 ✕ Tolak
                             </button>
                         </div>
-                    ) : (
+                    )}
+                    {showRejectInput && (
                         <div className="flex flex-col gap-2">
                             <textarea value={rejectReason} onChange={(e) => setRejectReason(e.target.value)}
                                 placeholder="Alasan penolakan..."
@@ -155,6 +165,27 @@ export default function Pembelajaran() {
                                     Kirim Penolakan
                                 </button>
                                 <button onClick={() => setShowRejectInput(false)}
+                                    className="flex-1 bg-muted-text text-white rounded-lg px-3 py-2 text-sm">
+                                    Batal
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                    {showApproveInput && (
+                        <div className="flex flex-col gap-2">
+                            <input type="file" accept=".pdf" ref={fileSignedInputRef} className="hidden"
+                                onChange={(e) => setSignedFile(e.target.files?.[0] ?? null)} />
+                            <button onClick={() => fileSignedInputRef.current?.click()}
+                                className="border border-dashed border-light-blue text-light-blue rounded-lg px-3 py-2 text-sm flex items-center justify-center gap-2">
+                                <FaUpload size={12} />
+                                {signedFile ? signedFile.name : "Unggah Surat Tugas Bertanda Tangan (PDF)"}
+                            </button>
+                            <div className="flex gap-2">
+                                <button onClick={handleApprove} disabled={!signedFile || isActing}
+                                    className="flex-1 bg-green-500 text-white rounded-lg px-3 py-2 text-sm disabled:opacity-60 font-semibold">
+                                    Kirim Persetujuan
+                                </button>
+                                <button onClick={() => { setShowApproveInput(false); setSignedFile(null); }}
                                     className="flex-1 bg-muted-text text-white rounded-lg px-3 py-2 text-sm">
                                     Batal
                                 </button>

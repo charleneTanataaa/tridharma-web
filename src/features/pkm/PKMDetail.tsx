@@ -1,9 +1,5 @@
-import DashboardLayout from "../../layouts/DashboardLayout"
+import DharmaDetailFeature from "../tridharma/DharmaDetailFeature";
 
 export default function PKMDetail() {
-    return (
-        <DashboardLayout>
-            <div>PKM Detail</div>
-        </DashboardLayout>
-    )
+  return <DharmaDetailFeature type="pkm" />;
 }
